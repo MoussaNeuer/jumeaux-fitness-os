@@ -1,0 +1,42 @@
+html{scroll-behavior:smooth}
+.rv{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0ms)}
+.rv.in{opacity:1;transform:none}
+#prog{position:fixed;top:0;left:0;height:3px;background:var(--g2);width:0;z-index:99}
+.lnav{position:sticky;top:0;z-index:30;backdrop-filter:blur(12px);background:color-mix(in srgb,var(--bg) 80%,transparent);border-bottom:1px solid var(--bd)}
+.lnav .nav{padding:12px 20px}
+.links{display:flex;gap:24px}.links a{color:var(--mut);text-decoration:none;font-weight:500;transition:.2s}.links a:hover{color:var(--ink)}
+.hero-bg{position:absolute;inset:0;overflow:hidden;z-index:-1;pointer-events:none}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.25;animation:drift 14s ease-in-out infinite alternate}
+.b1{width:420px;height:420px;background:var(--g2);top:-80px;right:-60px}.b2{width:340px;height:340px;background:var(--g);bottom:-100px;left:-80px;animation-delay:-6s}
+@keyframes drift{to{transform:translate(40px,30px) scale(1.12)}}
+.hero-h span{display:block;overflow:hidden;padding-bottom:4px}.hero-h span i{display:block;font-style:normal;animation:up .9s cubic-bezier(.2,.7,.2,1) both;animation-delay:var(--d)}
+@keyframes up{from{transform:translateY(105%)}}
+.fadein{animation:fi .9s .6s both}@keyframes fi{from{opacity:0;transform:translateY(16px)}}
+.mock{position:relative;animation:fi 1s .4s both}
+.fl{position:absolute;animation:float 5s ease-in-out infinite;box-shadow:0 10px 24px #10151222}
+@keyframes float{50%{transform:translateY(-12px)}}
+.pill{display:inline-flex;gap:8px;align-items:center;padding:7px 14px;border-radius:99px;border:1px solid var(--bd);background:var(--card);font-size:13px;font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--g2);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #22C55E88}100%{box-shadow:0 0 0 10px #22C55E00}}
+.mq{overflow:hidden;border-block:1px solid var(--bd);padding:14px 0}
+.mq div{display:flex;gap:56px;width:max-content;animation:mq 26s linear infinite;font-weight:700;color:var(--mut)}
+@keyframes mq{to{transform:translateX(-25%)}}
+.ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:#22C55E1f;color:var(--g);font-size:18px;margin-bottom:12px;transition:.3s}
+.hv{transition:transform .3s,box-shadow .3s,opacity .7s}.hv:hover{transform:translateY(-6px);box-shadow:0 14px 30px #10151722}.hv:hover .ic{background:var(--g);color:#fff;transform:rotate(-6deg) scale(1.08)}
+.flow .node{display:flex;gap:10px;align-items:center;animation:glow 6s infinite;animation-delay:var(--d)}
+@keyframes glow{0%,20%,100%{border-color:var(--bd);box-shadow:none}8%{border-color:var(--g2);box-shadow:0 0 0 4px #22C55E33}}
+.shine{position:relative;overflow:hidden}.shine::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,#ffffff44,transparent);transform:skewX(-20deg);animation:sh 4s infinite}
+@keyframes sh{to{left:140%}}
+.btn i{margin-right:6px}.btn .r{margin:0 0 0 6px;transition:.2s}.btn:hover .r{transform:translateX(4px)}
+@media(max-width:860px){.links{display:none}}
+/* présentation */
+#pres{display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;z-index:60;max-width:92vw;width:640px}
+body.pres #pres{display:block}body.pres .side,body.pres .top{display:none}body.pres .app{grid-template-columns:1fr}body.pres .main{padding-bottom:140px}
+#pres .btn{background:#ffffff18;color:inherit;border-color:#ffffff30}
+.pbar{height:4px;background:#ffffff30;border-radius:4px;margin-top:10px}.pbar i{display:block;height:100%;background:var(--g2);border-radius:4px;transition:.3s}
+/* mobile adhérent */
+.phone{max-width:390px;margin:20px auto;background:var(--bg);border:1px solid var(--bd);border-radius:32px;overflow:hidden;min-height:760px;display:flex;flex-direction:column;box-shadow:0 20px 50px #0002}
+.pb{flex:1;padding:20px;display:grid;gap:14px;align-content:start}
+.pnav{display:flex;border-top:1px solid var(--bd);background:var(--card)}.pnav button{flex:1;padding:12px 0;font-size:12px;color:var(--mut)}.pnav .on{color:var(--g);font-weight:700}
+.idc{background:linear-gradient(135deg,#101512,#176B45);color:#fff;border-radius:18px;padding:18px}
+.qr{background:#fff;padding:10px;border-radius:10px;display:inline-block;line-height:0}

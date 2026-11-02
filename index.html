@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Jumeaux Fitness OS — Démonstration</title>
+<meta name="theme-color" content="#176B45">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="assets/icons/icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js" defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/dashboard.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+<div id="root"></div><div id="modal"></div><div id="tip"></div><div id="toast"></div>
+<div id="pres"><div class="row sp"><b id="pt"></b><span class="mut" id="pc"></span></div><p id="px" style="margin:6px 0;font-size:14px"></p>
+<div class="row"><button class="btn s" onclick="step(-1)">← Précédent</button><button class="btn s" onclick="step(1)">Suivant →</button><button class="btn s" onclick="document.documentElement.requestFullscreen?.()">Plein écran</button><button class="btn s" onclick="endPres()">Quitter</button></div><div class="pbar"><i id="pp"></i></div></div>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/core.js"></script>
+<script src="assets/js/landing.js"></script>
+<script src="assets/js/dashboard.js"></script>
+<script src="assets/js/actions.js"></script>
+<script src="assets/js/member-portal.js"></script>
+<script src="assets/js/presentation.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
