@@ -1,1 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#101512"/><text x="256" y="320" font-family="Arial" font-weight="800" font-size="220" text-anchor="middle" fill="#22C55E">JF</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Jumeaux Fitness OS">
+  <defs>
+    <radialGradient id="g" cx="62%" cy="16%" r="88%">
+      <stop offset="0" stop-color="#2FD07B" stop-opacity=".34"/>
+      <stop offset=".58" stop-color="#0E7A4B" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#07130D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#07130D"/>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <g fill="#2FD07B">
+    <rect x="137" y="243" width="238" height="26" rx="13"/>
+    <rect x="170" y="192" width="38" height="128" rx="19"/>
+    <rect x="304" y="192" width="38" height="128" rx="19"/>
+    <rect x="118" y="214" width="26" height="84" rx="13"/>
+    <rect x="368" y="214" width="26" height="84" rx="13"/>
+  </g>
+  <g fill="#A7F3C9">
+    <rect x="143" y="229" width="14" height="54" rx="7"/>
+    <rect x="355" y="229" width="14" height="54" rx="7"/>
+  </g>
+</svg>

@@ -1,16 +1,154 @@
-// ===== Espace adhérent (mobile) =====
+// ============================================================================
+// Espace adhérent (rendu mobile simulé)
+// ============================================================================
 let ME = null;
-function portal(){
-  ME = ME || D.km.mem.find(m => statut(m) === 'actif'); ME.nom = ME.nom;
-  const m = ME, jours = Math.ceil((m.exp - AUJ)/J), pl = PLANS[m.plan];
-  if(!S.logged) return '<div class="phone"><div class="pb" style="place-content:center;text-align:center"><div class="logo" style="font-size:22px">JUMEAUX FITNESS <i>OS</i></div><h2>Bienvenue dans votre espace membre.</h2><div class="f"><label>Identifiant de démonstration<input value="'+m.id+'" readonly></label><label>Mot de passe de démonstration<input type="password" value="demo-demo" readonly></label></div><button class="btn p" onclick="S.logged=true;render()">Entrer en mode démonstration</button><button class="btn" onclick="go({view:\'land\'})">← Retour</button></div></div>';
-  const home = '<div class="idc"><div class="row sp"><b>JUMEAUX FITNESS</b><span class="badge b-ok">'+statut(m)+'</span></div><h2 style="margin:14px 0 2px">'+esc(m.nom)+'</h2><span style="opacity:.8">'+m.id+' · Keur Massar</span><div class="row sp" style="margin-top:14px"><div>Expire le '+dstr(m.exp)+'<br><b style="font-size:26px">'+jours+' jours</b> restants</div>'+qrSvg(m.id,84)+'</div></div><button class="btn" onclick="bigQr()">Agrandir mon QR code</button><p class="mut" style="font-size:12px">QR code de démonstration — non utilisable pour un contrôle réel.</p>';
-  const abo = '<div class="card"><h3>Mon abonnement</h3><p>Formule : <b>'+pl.n+'</b> · '+fmt(pl.p)+' <span class="demo">fictif</span></p><p>Début : '+dstr(new Date(+m.exp - pl.j*J))+'<br>Fin / renouvellement : '+dstr(m.exp)+'</p>'+bdg(statut(m))+'</div><button class="btn p" onclick="renewMe()">Simuler un renouvellement</button>';
-  const pay = '<div class="card"><h3>Mes paiements</h3>'+D.km.pay.filter(p=>p.m===m.id).concat(D.km.pay.slice(0,3)).slice(0,5).map(p=>'<div class="act"><span>'+dstr(p.date)+' · '+fmt(p.montant)+'<br><small class="mut">'+p.moyen+' · '+p.ref+'</small></span></div>').join('')+'</div>';
-  const pre = '<div class="card"><h3>Mes présences</h3>'+[0,1,2,3,4].map(i=>'<div class="act"><span>'+dstr(new Date(+AUJ - i*2*J))+' · 1'+(7-i)+':'+(i%2?'05':'40')+'<br><small class="mut">Jumeaux Fitness — Keur Massar</small></span><span style="margin-left:auto">'+bdg('actif').replace('actif','autorisé')+'</span></div>').join('')+'</div>';
-  const prof = '<div class="card"><h3>Mon profil</h3><div class="f"><label>Nom d’affichage<input id="pn" value="'+esc(m.nom)+'"></label><label>Téléphone fictif<input id="pt2" value="'+esc(m.tel)+'"></label><label>E-mail fictif<input id="pe" value="'+esc(m.mail||'adherent@demo.local')+'"></label></div><div class="row" style="margin-top:12px"><button class="btn p" onclick="ME.nom=$(\'pn\').value||ME.nom;ME.tel=$(\'pt2\').value;ME.mail=$(\'pe\').value;toast(\'Profil modifié (local)\');render()">Enregistrer</button><button class="btn" onclick="S.logged=false;S.ptab=\'home\';render()">Quitter le mode démo</button></div></div>';
-  const tabs = {home,abo,pay,pre,prof};
-  return '<div class="phone"><div class="pb">'+tabs[S.ptab]+'</div><div class="pnav">'+[['home','Accueil'],['abo','Abonnement'],['pay','Paiements'],['pre','Présences'],['prof','Profil']].map(t=>'<button class="'+(S.ptab===t[0]?'on':'')+'" onclick="S.ptab=\''+t[0]+'\';render()">'+t[1]+'</button>').join('')+'</div></div><p style="text-align:center"><button class="btn s" onclick="go({view:\'net\'})">Retour au back-office</button></p>';
+let NOTIFS = { exp: true, pay: true, news: false };
+
+function portalMember() {
+  if (ME && findMembre(ME.id)) return findMembre(ME.id);
+  const pool = [];
+  SALLES.forEach(s => D[s.id].mem.forEach(m => {
+    if (statut(m) === 'actif' && D[s.id].pre.some(p => p.m === m.id)) pool.push(m);
+  }));
+  ME = pool.find(m => D[m.home].pay.some(p => p.m === m.id)) || pool[0] || D.km.mem[0];
+  return ME;
 }
-function bigQr(){ openModal('<div style="text-align:center">'+qrSvg(ME.id,260)+'<p class="mut" style="margin:10px 0">QR code de démonstration — non utilisable pour un contrôle réel.</p><button class="btn" onclick="closeModal()">Fermer</button></div>'); }
-function renewMe(){ ME.exp = new Date(+ME.exp + PLANS[ME.plan].j*J); toast('Renouvellement simulé'); render(); }
+
+function ensureDemoHistory(m) {
+  const d = D[m.home];
+  if (!d.pay.some(p => p.m === m.id)) {
+    d.pay.unshift({ ref: 'REC-' + m.id + '-D', m: m.id, montant: PLANS[m.plan].p, moyen: 'Wave', date: addDays(-9), st: 'confirmé', agent: 'Accueil' });
+    d.pay.sort((a, b) => b.date - a.date);
+  }
+  if (!d.pre.some(p => p.m === m.id)) {
+    [1, 3, 5, 8].forEach((n, i) => d.pre.push({ at: new Date(+AUJ - n * J + (17 + i) * 3600000 + 12 * 60000), m: m.id, ok: true, type: i % 2 ? 'QR' : 'Manuel' }));
+    d.pre.sort((a, b) => a.at - b.at);
+  }
+}
+
+function portal() {
+  const m = portalMember();
+  ensureDemoHistory(m);
+  const d = D[m.home], p = PLANS[m.plan], jr = joursRestants(m);
+  if (!S.logged) return portalLogin(m);
+
+  const hour = new Date().getHours();
+  const hello = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
+  const members = SALLES.flatMap(s => D[s.id].mem.filter(x => statut(x) === 'actif').slice(0, 3));
+  const selector = '<select class="member-switch" aria-label="Changer de compte de démonstration" onchange="switchMember(this.value)">' +
+    members.map(x => '<option value="' + x.id + '"' + (x.id === m.id ? ' selected' : '') + '>' + esc(x.nom) + ' — ' + D[x.home].nom + '</option>').join('') + '</select>';
+
+  const sbar = '<div class="statusbar"><span>' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + '</span><span class="statusbar-l"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-full"></i></span></div>';
+
+  const home = '<div class="p-hello"><span>' + hello + ',</span><h2>' + esc(m.nom.split(' ')[0]) + '</h2><small>' + dayLabel(new Date()) + '</small></div>' +
+    '<div class="idc">' +
+      '<div class="idc-top"><span class="idc-brand">' + ICON('dumbbell') + ' JUMEAUX FITNESS</span><span class="badge ' + (statut(m) === 'actif' ? 'b-ok' : 'b-warn') + '">' + esc(statut(m) === 'actif' ? 'Actif' : 'Expire bientôt') + '</span></div>' +
+      '<div class="idc-name"><b>' + esc(m.nom) + '</b><span>' + m.id + ' · ' + esc(d.nom) + '</span></div>' +
+      '<div class="idc-bottom"><div class="idc-exp"><small>Valable jusqu’au</small><b>' + dstr(m.exp) + '</b><span>' + (jr >= 0 ? jr + ' jours restants' : 'Expiré') + ' · ' + p.n + '</span></div>' +
+      '<button class="idc-qr" onclick="bigQr()" aria-label="Agrandir mon QR code">' + qrSvg(m, 70) + '</button></div>' +
+      '<span class="idc-chip">' + ICON('wifi') + ' Carte numérique · démonstration</span>' +
+    '</div>' +
+    '<div class="p-actions"><button class="p-action" onclick="bigQr()">' + ICON('expand') + '<span>Mon QR</span></button>' +
+      '<button class="p-action" onclick="S.ptab=\'abo\';render()">' + ICON('arrows-rotate') + '<span>Renouveler</span></button>' +
+      '<button class="p-action" onclick="S.ptab=\'pay\';render()">' + ICON('receipt') + '<span>Mes reçus</span></button></div>' +
+    '<div class="card p-next"><div class="row sp"><b>Prochaine échéance</b>' + bdg(statut(m)) + '</div>' +
+      '<div class="p-next-row"><div><small>' + p.n + '</small><b>' + dstr(m.exp) + '</b></div><div class="p-days"><b>' + Math.max(0, jr) + '</b><small>jours</small></div></div>' +
+      '<div class="progress"><i style="width:' + Math.max(4, Math.min(100, (1 - Math.max(0, jr) / p.j) * 100)) + '%"></i></div>' +
+      '<button class="btn p w" onclick="S.ptab=\'abo\';render()">Voir mon abonnement</button></div>' +
+    '<div class="card p-visits"><div class="row sp"><b>Dernières visites</b><button class="linkbtn" onclick="S.ptab=\'pre\';render()">Tout voir</button></div>' +
+      D[m.home].pre.filter(x => x.m === m.id).slice(-3).reverse().map(x => '<div class="p-visit"><span class="p-vic">' + ICON('dumbbell') + '</span><span><b>' + dayLabel(x.at) + '</b><small>' + hhmm(x.at) + ' · ' + d.nom + '</small></span>' + bdg('autorisé') + '</div>').join('') +
+      '</div>';
+
+  const abo = '<div class="p-hello"><span>Mon abonnement</span><h2>' + p.n + '</h2><small>Formule fictive · ' + fmt(p.p) + '</small></div>' +
+    '<div class="card p-plan" style="--pc:' + p.c + '"><div class="row sp"><span class="plan-name">' + p.n + '</span><span class="badge ' + (jr >= 0 ? 'b-ok' : 'b-ko') + '">' + (jr >= 0 ? 'En cours' : 'Expiré') + '</span></div>' +
+      '<b class="plan-price">' + fmt(p.p) + '</b><span class="tiny mut">' + p.j + ' jours · ' + p.d + '</span>' +
+      '<div class="p-plan-dates"><span><small>Début</small><b>' + dstr(new Date(+m.exp - p.j * J)) + '</b></span><span><small>Fin</small><b>' + dstr(m.exp) + '</b></span></div>' +
+      '<div class="progress lg"><i style="width:' + Math.max(3, Math.min(100, jr / p.j * 100)) + '%"></i></div>' +
+      '<span class="tiny mut">' + (jr >= 0 ? jr + ' jours restants' : 'Expiré depuis ' + Math.abs(jr) + ' jours') + '</span></div>' +
+    '<div class="card p-info"><h3>Accès & avantages</h3><ul class="checklist">' +
+      ['Accès à ' + esc(d.nom), m.multi ? 'Accès multi-salles inclus' : 'Salle unique (option multi-salles disponible)', 'Carte numérique et QR personnel', 'Reçus disponibles dans l’espace personnel'].map(x => '<li>' + ICON('circle-check') + x + '</li>').join('') + '</ul></div>' +
+    '<button class="btn p w lg" onclick="renewMe()">' + ICON('arrows-rotate') + 'Simuler un renouvellement</button>' +
+    '<p class="tiny center mut">Aucun paiement réel. Le renouvellement met simplement à jour la démonstration.</p>';
+
+  const pays = D[m.home].pay.filter(x => x.m === m.id).slice(0, 8);
+  const total = pays.filter(x => x.st === 'confirmé').reduce((a, x) => a + x.montant, 0);
+  const pay = '<div class="p-hello"><span>Mes paiements</span><h2>' + fmt(total) + '</h2><small>Historique fictif · ' + d.nom + '</small></div>' +
+    '<div class="card p-pay-list">' + (pays.length ? pays.map(x => '<button class="p-pay" onclick="receiptRef(\'' + x.ref + '\')"><span class="p-pay-ic">' + ICON(MOYENS_ICON[x.moyen] || 'wallet') + '</span><span><b>' + fmt(x.montant) + '</b><small>' + dstr(x.date) + ' · ' + x.moyen + '</small></span>' + bdg(x.st) + ICON('chevron-right') + '</button>').join('') : emptyState('receipt', 'Aucun paiement', 'Votre historique apparaîtra ici.')) + '</div>' +
+    '<button class="btn w" onclick="exportCSV(\'paiements\')">' + ICON('file-csv') + 'Exporter mes paiements</button>';
+
+  const visits = D[m.home].pre.filter(x => x.m === m.id).slice().reverse().slice(0, 12);
+  const week = [0, 1, 2, 3, 4, 5, 6].map(i => visits.filter(x => +new Date(x.at) >= +AUJ - i * J && +new Date(x.at) < +AUJ - (i - 1) * J).length);
+  const pre = '<div class="p-hello"><span>Mes présences</span><h2>' + visits.length + '</h2><small>passages enregistrés · ' + d.nom + '</small></div>' +
+    '<div class="card"><div class="row sp"><b>Cette semaine</b><span class="badge b-ok">' + week.reduce((a, b) => a + b, 0) + ' passages</span></div>' +
+      '<div class="p-week">' + week.slice().reverse().map((v, i) => '<span><i style="height:' + Math.max(6, v / Math.max(1, ...week) * 48) + 'px"></i><small>' + JOURS[i] + '</small></span>').join('') + '</div></div>' +
+    '<div class="card p-pay-list">' + (visits.length ? visits.map(x => '<div class="p-pay"><span class="p-pay-ic">' + ICON('dumbbell') + '</span><span><b>' + dayLabel(x.at) + '</b><small>' + hhmm(x.at) + ' · ' + d.nom + '</small></span>' + bdg(x.ok ? 'autorisé' : 'refusé') + '</div>').join('') : emptyState('dumbbell', 'Aucune visite', 'Votre historique apparaîtra ici.')) + '</div>';
+
+  const prof = '<div class="p-hello"><span>Mon compte</span><h2>' + esc(m.nom.split(' ')[0]) + '</h2><small>' + m.id + ' · membre depuis ' + dstr(m.inscription) + '</small></div>' +
+    '<div class="card"><div class="row gap12" style="align-items:center">' + avatar(m.nom, 'big') + '<div><b>' + esc(m.nom) + '</b><br><small class="mut">' + esc(m.mail || 'Sans e-mail') + '</small></div></div>' +
+      '<div class="f"><label>Nom d’affichage<input id="pn" value="' + esc(m.nom) + '"></label><label>Téléphone fictif<input id="pt2" value="' + esc(m.tel) + '"></label><label>E-mail fictif<input id="pe" value="' + esc(m.mail) + '"></label></div>' +
+      '<button class="btn p w" style="margin-top:12px" onclick="saveProfile()">' + ICON('check') + 'Enregistrer</button></div>' +
+    '<div class="card"><h3>Notifications</h3>' +
+      [['exp', 'Rappel d’expiration', '7 jours avant l’échéance'], ['pay', 'Reçus de paiement', 'À chaque encaissement'], ['news', 'Actualités de la salle', 'Nouveaux cours et horaires']].map(n =>
+        '<label class="switch-row"><span><b>' + n[1] + '</b><small>' + n[2] + '</small></span><input type="checkbox" ' + (NOTIFS[n[0]] ? 'checked' : '') + ' onchange="NOTIFS[\'' + n[0] + '\']=this.checked;toast(\'Préférence enregistrée (démo)\',\'ok\')"></label>').join('') + '</div>' +
+    '<button class="btn w" onclick="S.logged=false;S.ptab=\'home\';render()">' + ICON('right-from-bracket') + 'Quitter le mode démo</button>' +
+    '<p class="tiny center mut">Espace personnel de démonstration — aucune donnée réelle.</p>';
+
+  const content = { home, abo, pay, pre, prof }[S.ptab] || home;
+  const nav = [['home', 'house', 'Accueil'], ['abo', 'id-card', 'Abonnement'], ['pay', 'receipt', 'Paiements'], ['pre', 'dumbbell', 'Présences'], ['prof', 'user', 'Profil']]
+    .map(t => '<button class="' + (S.ptab === t[0] ? 'on' : '') + '" onclick="S.ptab=\'' + t[0] + '\';render()">' + ICON(t[1]) + '<span>' + t[2] + '</span></button>').join('');
+
+  return '<div class="portal-wrap"><div class="portal-side"><a class="brand" href="#" onclick="go({view:\'land\'});return false;"><span class="mark">' + ICON('dumbbell') + '</span><span class="brand-t">JUMEAUX <b>OS</b></span></a>' +
+    '<span class="site-brand on-dark" style="margin-top:18px">' + ICON('palette') + esc(d.nom) + ' · ' + esc(d.palette) + '</span>' +
+    '<span class="eyebrow light" style="margin-top:14px">Espace adhérent</span><h2 class="serif">« Ma salle,<br>dans ma poche. »</h2>' +
+    '<p class="mut">Carte numérique, QR d’accès, abonnement et reçus. Le client retrouve tout sans installer d’application.</p>' +
+    '<div class="portal-side-facts"><span>' + ICON('shield-halved') + 'Données fictives</span><span>' + ICON('wifi') + 'Fonctionne hors ligne</span><span>' + ICON('mobile-screen') + 'Sans installation</span></div>' +
+    '<button class="btn ghost" onclick="go({view:\'net\'})">' + ICON('arrow-left') + 'Retour au back-office</button></div>' +
+    '<div class="phone-wrap"><div class="phone-label">' + selector + '</div><div class="phone"><div class="phone-screen">' + sbar + '<div class="pb">' + content + '</div><nav class="pnav" aria-label="Navigation adhérent">' + nav + '</nav></div></div>' +
+    '<p class="tiny mut center" style="margin-top:10px">' + ICON('circle-info') + ' Compte de démonstration — changez d’adhérent ci-dessus.</p></div></div>';
+}
+
+function portalLogin(m) {
+  return '<div class="login-wrap"><div class="login-card">' +
+    '<a class="brand" href="#" onclick="go({view:\'land\'});return false;"><span class="mark">' + ICON('dumbbell') + '</span><span class="brand-t">JUMEAUX <b>OS</b></span></a>' +
+    '<span class="site-brand" style="margin-top:14px">' + ICON('palette') + esc(D[m.home].nom) + ' · ' + esc(D[m.home].palette) + '</span>' +
+    '<span class="eyebrow" style="margin-top:12px">Espace adhérent</span><h1 class="serif">Votre salle,<br>dans votre poche.</h1>' +
+    '<p class="mut">Carte numérique, QR d’accès, abonnement et reçus. Aucun mot de passe réel n’est demandé.</p>' +
+    '<div class="login-demo"><div class="row sp"><span class="tiny mut">Compte de démonstration</span><span class="badge b-off">pré-rempli</span></div>' +
+      '<div class="f"><label>Identifiant<input value="' + m.id + '" readonly></label><label>Mot de passe<input type="password" value="demo-demo" readonly></label></div>' +
+      '<button class="btn p w lg" onclick="S.logged=true;render()">' + ICON('arrow-right-to-bracket') + 'Entrer dans l’espace démo</button></div>' +
+    '<button class="linkbtn" style="margin-top:14px" onclick="go({view:\'land\'})">' + ICON('arrow-left') + 'Retour à la présentation</button></div>' +
+    '<div class="login-art"><div class="login-phone">' + qrSvg(m, 150) + '<b>' + esc(m.nom) + '</b><small>' + m.id + '</small></div><span class="pill dark">' + ICON('shield-halved') + 'Accès personnel sécurisé (simulé)</span></div></div>';
+}
+
+function switchMember(id) {
+  ME = findMembre(id);
+  ensureDemoHistory(ME);
+  S.ptab = 'home';
+  render();
+}
+function saveProfile() {
+  const m = portalMember();
+  m.nom = ($('pn').value || m.nom).trim();
+  m.tel = $('pt2').value.trim();
+  m.mail = $('pe').value.trim();
+  recalc(); render();
+  toast('Profil mis à jour localement', 'ok');
+}
+function bigQr() {
+  const m = portalMember();
+  openModal('<div style="text-align:center"><h3>Mon QR d’accès</h3><p class="tiny mut">' + esc(m.nom) + ' · ' + D[m.home].nom + ' · expire le ' + dstr(m.exp) + '</p>' +
+    '<div class="qr-stage">' + qrSvg(m, 250, m.home) + '</div>' +
+    '<p class="tiny mut" style="margin:10px 0">Scannez ce code avec un téléphone pour ouvrir la borne de contrôle. QR de démonstration, non valable dans une vraie salle.</p>' +
+    '<div class="row gap8 center"><button class="btn p" onclick="closeModal();goCheckin(\'' + m.id + '\',\'' + m.home + '\')">' + ICON('door-open') + 'Ouvrir la borne</button>' +
+    '<button class="btn" onclick="copyText(\'' + checkinUrl(m, m.home) + '\')">' + ICON('link') + 'Copier le lien</button></div>' +
+    '<p class="tiny mut" style="margin-top:10px">' + (m.multi ? 'Accès multi-salles autorisé.' : 'Accès limité à ' + D[m.home].nom + ' — hors formule multi-salles, la borne refusera l’entrée.') + '</p></div>', { title: 'Mon QR' });
+}
+function renewMe() {
+  const m = portalMember(), d = D[m.home], p = PLANS[m.plan];
+  m.exp = new Date(+Math.max(+AUJ, +m.exp) + p.j * J);
+  d.pay.unshift({ ref: 'REC-' + m.id + '-R' + Date.now().toString().slice(-3), m: m.id, montant: p.p, moyen: 'Wave', date: new Date(), st: 'confirmé', agent: 'Espace adhérent' });
+  d.act.unshift(['Abonnement renouvelé', m.nom]);
+  journal('Renouvellement adhérent', m.nom + ' · ' + p.n);
+  recalc(); render();
+  toast('Renouvellement simulé · reçu disponible', 'ok');
+}

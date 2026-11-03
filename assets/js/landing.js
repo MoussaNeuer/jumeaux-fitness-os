@@ -1,33 +1,264 @@
-// ===== Landing =====
-const IC = n => '<i class="fa-solid fa-'+n+'"></i>';
-const rv = i => ' rv" style="--d:'+i*80+'ms'; // apparition au scroll
-function landing(){
-  const col = ['#176B45','#1d7d52','#14583a','#22804f'];
-  const cards = SALLES.map((s,i) => '<div class="card hv'+rv(i)+'"><div class="salle-img" style="background:linear-gradient(135deg,#101512,'+col[i]+')">'+IC('dumbbell')+'&nbsp;'+s.id.toUpperCase()+'</div><h3>Jumeaux Fitness — '+s.nom+'</h3><p class="mut" style="margin:6px 0 12px"><b data-count="'+kp(s.id).act+'">0</b> adhérents actifs (données fictives)</p><button class="btn s p" onclick="go({view:\'salle\',salle:\''+s.id+'\',tab:\'dash\'})">Explorer cet établissement<i class="fa-solid fa-arrow-right r"></i></button></div>').join('');
-  const adv = [['network-wired','Gestion centralisée','Une vue unique sur les quatre salles.'],['store','Autonomie de chaque salle','Chaque équipe gère ses adhérents et ses encaissements.'],['arrows-rotate','Abonnements intelligents','Statuts clairs, renouvellements sans perte d’historique.'],['qrcode','Contrôle QR','Le résultat d’accès s’affiche en une seconde.'],['mobile-screen','Espace adhérent','Carte numérique, reçus et historique sur smartphone.'],['chart-line','Vision stratégique','Comparer les salles et préparer la suivante.']].map((a,i) => '<div class="card hv'+rv(i%3)+'"><div class="ic">'+IC(a[0])+'</div><h3>'+a[1]+'</h3><p class="mut">'+a[2]+'</p></div>').join('');
-  const flow = [['crown','Direction générale'],['location-dot','Établissements'],['users','Équipes'],['dumbbell','Adhérents']].map((n,i) => (i?'<div class="arrow"></div>':'')+'<div class="node" style="--d:'+i*1.5+'s">'+IC(n[0])+n[1]+'</div>').join('');
-  const mq = Array(4).fill(SALLES).flat().map(s => '<span>'+IC('location-dot')+' '+s.nom+'</span>').join('');
-  return '<div id="prog"></div><div class="lnav"><div class="wrap nav"><div class="logo">'+IC('dumbbell')+' JUMEAUX FITNESS <i>OS</i></div><div class="links"><a href="#etab">Établissements</a><a href="#avantages">Avantages</a><a href="#apercu">Aperçu</a></div><div class="row"><button class="btn s" aria-label="Thème" onclick="toggleTheme()">'+IC('circle-half-stroke')+'</button><button class="btn s p" onclick="startPres()">'+IC('play')+'Mode présentation</button></div></div></div>'+
-  '<div style="position:relative"><div class="hero-bg"><div class="blob b1"></div><div class="blob b2"></div></div><div class="wrap hero"><div><span class="pill fadein"><span class="dot"></span>Prototype interactif — données fictives</span><h1 class="hero-h" style="margin-top:18px"><span><i style="--d:.1s">One platform.</i></span><span><i style="--d:.25s">Four gyms.</i></span><span><i style="--d:.4s">One connected experience.</i></span></h1><p class="lead fadein">Une nouvelle expérience numérique pour piloter, connecter et développer l’ensemble du réseau Jumeaux Fitness.</p><div class="row fadein"><button class="btn p shine" onclick="go({view:\'net\'})">'+IC('rocket')+'Découvrir la plateforme</button><button class="btn" onclick="document.getElementById(\'etab\').scrollIntoView({behavior:\'smooth\'})">Explorer les quatre établissements</button></div><p class="mut fadein" style="margin-top:14px;font-size:13px">Une plateforme. Quatre salles. Une gestion intelligente.</p></div>'+
-  '<div class="mock"><div class="card" style="padding:14px"><div class="grid g3" style="gap:10px">'+kpi('Adhérents actifs','<span data-count="'+net.act+'">0</span>')+kpi('Présences du jour','<span data-count="'+net.pres+'">0</span>')+kpi('Établissements','<span data-count="4">0</span>')+'</div><div style="margin-top:10px">'+line(addv('rev').map(v=>Math.round(v/1e4)/100),MOIS,'Revenus réseau sur 12 mois',' M FCFA')+'</div></div><span class="pill fl" style="top:-16px;right:8px">'+IC('qrcode')+'Accès autorisé</span><span class="pill fl" style="bottom:-16px;left:8px;animation-delay:-2.5s">'+IC('circle-check')+'Paiement Wave enregistré</span></div></div></div>'+
-  '<div class="mq"><div>'+mq+'</div></div>'+
-  '<div class="wrap"><div class="sec" id="etab"><h2 class="rv">Une vision, quatre établissements</h2><p class="mut rv" style="margin-bottom:18px">Une seule plateforme. Chaque salle garde ses propres données.</p><div class="grid g4">'+cards+'</div></div>'+
-  '<div class="sec" id="avantages"><h2 class="rv" style="margin-bottom:18px">Pourquoi cette plateforme ?</h2><div class="grid g3">'+adv+'</div></div>'+
-  '<div class="sec"><h2 class="rv" style="margin-bottom:22px">Une expérience connectée</h2><div class="flow">'+flow+'</div></div>'+
-  '<div class="sec" id="apercu"><h2 class="rv">Aperçu du produit</h2><p class="mut rv" style="margin-bottom:18px">Les composants ci-dessous sont ceux du prototype.</p><div class="grid g2 rv">'+bars(D.km.freq,['L','M','M','J','V','S','D'],'Fréquentation hebdomadaire — Keur Massar')+activity('km')+'</div><div class="row rv" style="margin-top:16px"><button class="btn" onclick="go({view:\'portal\'})">'+IC('mobile-screen')+'Voir l’espace adhérent</button><button class="btn" onclick="go({view:\'salle\',tab:\'pre\'})">'+IC('qrcode')+'Tester le scanner QR</button></div></div>'+
-  '<div class="final rv"><h2>Le futur de Jumeaux Fitness commence ici.</h2><div style="margin-top:20px"><button class="btn p shine" onclick="go({view:\'net\'})">Explorer la démonstration interactive</button></div></div>'+
-  '<footer class="mut" style="padding:28px 0;font-size:13px">JUMEAUX FITNESS OS — Prototype de démonstration — données fictives, fonctionnalités simulées.</footer></div>';
+// ============================================================================
+// Page d'accueil commerciale
+// ============================================================================
+const rv = (i = 0) => ' rv" style="--d:' + i * 70 + 'ms';
+
+function etabCard(s, i) {
+  const k = kp(s.id);
+  return '<article class="card etab-card hv' + rv(i) + '">' +
+    '<div class="etab-top" style="--c:' + s.color + '">' +
+      '<span class="etab-code">' + s.id.toUpperCase() + '</span>' +
+      '<span class="etab-mark" aria-hidden="true">' + ICON('dumbbell') + '</span>' +
+      '<span class="etab-open">Ouvert en ' + s.ouvert + '</span>' +
+    '</div>' +
+    '<div class="etab-body">' +
+      '<h3>Jumeaux Fitness — ' + esc(s.nom) + '</h3>' +
+      '<p class="mut">' + esc(s.adresse) + '</p>' +
+      '<span class="site-tag" style="--c:' + s.color + '">' + ICON('palette') + esc(s.palette) + '</span>' +
+      '<div class="etab-stats">' +
+        '<span><b data-count="' + k.act + '">0</b>actifs</span>' +
+        '<span><b data-count="' + Math.round(k.rev / 1000) + '">0</b>k FCFA / mois</span>' +
+        '<span><b data-count="' + k.taux + '">0</b>% de rétention</span>' +
+      '</div>' +
+      '<button class="btn s w" onclick="go({view:\'salle\',salle:\'' + s.id + '\',tab:\'dash\'})">Ouvrir le back-office ' + ICON('arrow-right') + '</button>' +
+    '</div></article>';
 }
-// Effets : apparition au scroll, compteurs, barre de progression
-function count(n){
-  if(n.dataset.done) return; n.dataset.done = 1;
-  const to = +n.dataset.count, t0 = performance.now();
-  const tick = t => { const k = Math.min(1,(t-t0)/1200); n.textContent = Math.round(to*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(tick); };
+
+function landing() {
+  const k = net;
+  const revM = (k.rev / 1e6).toFixed(1).replace('.', ',');
+  const monthly = addv('rev');
+  const maxRev = Math.max(...monthly);
+  const sparkBars = monthly.map((v, i) => '<i style="height:' + Math.max(8, v / maxRev * 100) + '%;--d:' + i * 50 + 'ms"></i>').join('');
+  const mini = D.km.pay.slice(0, 3);
+  const memory = D.km.mem.find(m => statut(m) === 'actif') || D.km.mem[0];
+
+  const marquee = Array(3).fill(SALLES).flat().map(s =>
+    '<span><i class="fa-solid fa-location-dot"></i>' + s.nom + '</span>'
+  ).join('');
+
+  const features = [
+    ['users', 'Adhérents & abonnements', 'Une fiche unique par client : formule, échéance, historique, multi-salles. Plus de doublons.', 'Fiches, filtres, relances'],
+    ['qrcode', 'Contrôle d’accès QR', 'Le QR de l’adhérent est lu en une seconde. Le résultat est clair, même sans connexion.', 'Autorisé · refusé · mauvaise salle'],
+    ['money-bill-wave', 'Paiements traçables', 'Chaque encaissement génère une référence et un reçu. Wave, Orange Money, espèces ou carte.', 'Caisse, reçus, export'],
+    ['shield-halved', 'Centre anti-erreurs', 'L’application détecte les fiches incomplètes, les doublons et les paiements à vérifier.', 'Correction en un clic'],
+    ['chart-line', 'Statistiques du réseau', 'Comparez les salles, suivez les revenus et anticipez les départs. La version connectée sera en temps réel.', 'Vue direction consolidée'],
+    ['mobile-screen', 'Espace adhérent', 'Carte numérique, QR, abonnement, reçus et historique accessibles depuis un smartphone.', 'Sans application à installer'],
+    ['rocket', 'Prêt pour l’expansion', 'Ajoutez une salle sans changer d’outil. Les règles et les indicateurs suivent.', 'Projection à 5 salles'],
+    ['handshake', 'Accueil plus rapide', 'L’équipe voit l’essentiel au premier regard et peut proposer le bon renouvellement.', '3 secondes par passage']
+  ].map((f, i) =>
+    '<article class="card feat hv' + rv(i % 4) + '"><span class="feat-ic">' + ICON(f[0]) + '</span>' +
+    '<h3>' + f[1] + '</h3><p class="mut">' + f[2] + '</p><span class="feat-tag">' + f[3] + '</span></article>'
+  ).join('');
+
+  const steps = [
+    ['07:30', 'L’adhérent arrive', 'L’accueil scanne son QR. Sa photo, sa formule et son échéance s’affichent. Accès validé en 3 secondes.', 'qrcode'],
+    ['08:05', 'Le gérant encaisse', 'Un renouvellement trimestriel est réglé par Wave. Le reçu est généré, l’échéance mise à jour.', 'money-bill-wave'],
+    ['12:40', 'La direction regarde', 'Keur Massar et Parcelles progressent. Les indicateurs des salles sont comparés sur un seul écran.', 'chart-pie'],
+    ['18:15', 'La journée est close', 'Les présences, les impayés et les anomalies sont listés. Rien ne dépend d’un fichier Excel oublié.', 'clipboard-check']
+  ].map((s, i) =>
+    '<div class="step rv" style="--d:' + i * 80 + 'ms"><span class="step-time">' + s[0] + '</span><span class="step-dot">' + ICON(s[3]) + '</span>' +
+    '<div><h3>' + s[1] + '</h3><p class="mut">' + s[2] + '</p></div></div>'
+  ).join('');
+
+  const entry = [
+    ['chart-pie', 'Vue direction', 'Les 4 salles, les revenus, les alertes et le flux des passages.', 'go({view:\'net\'})', 'Ouvrir la direction', 'p'],
+    ['store', 'Back-office d’une salle', 'Adhérents, abonnements, paiements, scanner QR et contrôle qualité.', 'go({view:\'salle\',salle:\'km\',tab:\'dash\'})', 'Entrer dans Keur Massar', ''],
+    ['mobile-screen', 'Espace adhérent', 'La carte numérique telle que la voit le client, sur son téléphone.', 'go({view:\'portal\'})', 'Voir l’espace membre', '']
+  ].map((e, i) =>
+    '<button class="try rv" style="--d:' + i * 80 + 'ms" onclick="' + e[3] + '">' +
+    '<span class="try-ic">' + ICON(e[0]) + '</span><b>' + e[1] + '</b><span class="mut">' + e[2] + '</span>' +
+    '<span class="try-go">' + e[4] + ' ' + ICON('arrow-right') + '</span></button>'
+  ).join('');
+
+  return '<div id="prog"></div>' +
+
+  // ---------------- Navigation ----------------
+  '<header class="lnav"><div class="wrap nav">' +
+    '<a class="brand" href="#top" aria-label="Jumeaux Fitness OS, accueil"><span class="mark">' + ICON('dumbbell') + '</span><span class="brand-t">JUMEAUX <b>OS</b></span></a>' +
+    '<nav class="links" aria-label="Navigation principale"><a href="#produit">Le produit</a><a href="#fonctions">Fonctionnalités</a><a href="#etablissements">Établissements</a><a href="#demo">Essayer</a></nav>' +
+    '<div class="row gap8">' +
+      '<button class="btn icon" aria-label="Changer de thème" data-tip="Thème clair / sombre" onclick="toggleTheme()">' + ICON('circle-half-stroke') + '</button>' +
+      '<button class="btn p s" onclick="startPres()">' + ICON('play') + '<span>Mode présentation</span></button>' +
+    '</div>' +
+  '</div></header>' +
+
+  '<main id="top">' +
+  // ---------------- Hero ----------------
+  '<section class="hero">' +
+    '<div class="hero-glow" aria-hidden="true"></div><div class="hero-grid-bg" aria-hidden="true"></div>' +
+    '<div class="wrap hero-in">' +
+      '<div class="hero-copy">' +
+        '<span class="pill dark fadein"><span class="dot"></span>Démonstration interactive · données fictives</span>' +
+        '<h1 class="hero-h" style="margin-top:22px">' +
+          '<span><i style="--d:.05s">Une plateforme.</i></span>' +
+          '<span><i style="--d:.18s">Quatre salles.</i></span>' +
+          '<span><i style="--d:.31s" class="serif">Une expérience connectée.</i></span>' +
+        '</h1>' +
+        '<p class="lead fadein">Pilotez les adhérents, les abonnements, les accès et les paiements de tout le réseau Jumeaux Fitness — depuis un seul endroit, sans perdre l’autonomie de chaque salle.</p>' +
+        '<div class="row gap12 fadein" style="margin-top:26px">' +
+          '<button class="btn p lg shine" onclick="go({view:\'net\'})">' + ICON('rocket') + 'Découvrir la plateforme</button>' +
+          '<a class="btn ghost lg" href="#demo">Voir la démonstration ' + ICON('arrow-down') + '</a>' +
+        '</div>' +
+        '<div class="hero-stats fadein">' +
+          '<span><b data-count="' + k.act + '">0</b><small>adhérents actifs</small></span>' +
+          '<span><b data-count="4">0</b><small>établissements</small></span>' +
+          '<span><b data-count="' + Math.round(k.rev / 100000) / 10 + '" data-dec="1">0</b><small>M FCFA / mois</small></span>' +
+        '</div>' +
+        '<p class="hero-note fadein">' + ICON('circle-info') + 'Aucun compte, aucun serveur, aucune donnée envoyée. La caméra n’est activée que si vous la demandez. Tout fonctionne dans votre navigateur.</p>' +
+      '</div>' +
+
+      '<div class="mock fadein" aria-hidden="true">' +
+        '<div class="win">' +
+          '<div class="win-bar"><span class="win-dots"><i></i><i></i><i></i></span><span class="win-url">' + ICON('lock') + 'jumeaux-os.app / direction</span><span class="win-live"><i></i>direct</span></div>' +
+          '<div class="win-body">' +
+            '<aside class="win-side">' + ['chart-pie', 'users', 'qrcode', 'money-bill-wave', 'chart-line', 'gear'].map((x, i) => '<span class="' + (i === 0 ? 'on' : '') + '">' + ICON(x) + '</span>').join('') + '</aside>' +
+            '<div class="win-main">' +
+              '<div class="win-head"><div><small>Vue générale</small><b>Bonjour, direction</b></div><span class="win-pill">' + ICON('location-dot') + '4 salles</span></div>' +
+              '<div class="win-kpis">' +
+                '<div><small>Actifs</small><b data-count="' + k.act + '">0</b><em>+12 ce mois</em></div>' +
+                '<div><small>Présences</small><b data-count="' + k.pres + '">0</b><em>aujourd’hui</em></div>' +
+                '<div><small>Revenus</small><b>' + revM + '</b><em>M FCFA</em></div>' +
+              '</div>' +
+              '<div class="win-chart"><div class="win-chart-h"><span>Revenus réseau</span><span class="up">+12,4 %</span></div><div class="mini-bars">' + sparkBars + '</div></div>' +
+              '<div class="win-list">' + mini.map(p => {
+                const m = findMembre(p.m);
+                return '<div class="win-row">' + avatar(m.nom) + '<span><b>' + esc(m.nom) + '</b><small>' + esc(p.moyen) + ' · ' + dstr(p.date) + '</small></span><em>' + fmtShort(p.montant) + '</em></div>';
+              }).join('') + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="float-card">' + qrSvg(memory, 72) + '<div><small>Carte adhérent</small><b>' + esc(memory.nom) + '</b><span class="ok-t"><i></i>Actif · ' + joursRestants(memory) + ' jours</span></div></div>' +
+        '<div class="float-pill ok">' + ICON('circle-check') + 'Accès autorisé <small>3 s</small></div>' +
+        '<div class="float-pill pay">' + ICON('wave-square') + 'Wave · ' + fmt(40000) + '</div>' +
+      '</div>' +
+    '</div>' +
+  '</section>' +
+
+  // ---------------- Bandeau lieux ----------------
+  '<div class="mq" aria-label="Les établissements du réseau"><div>' + marquee + '</div></div>' +
+
+  // ---------------- Problème / réponse ----------------
+  '<section class="wrap sec" id="produit">' +
+    '<div class="sec-head">' +
+      '<span class="eyebrow">Le quotidien, aujourd’hui</span>' +
+      '<h2>Quatre salles, quatre façons de travailler.<br><span class="serif">Un seul pilotage.</span></h2>' +
+      '<p class="mut">Les fichiers partagés, les cahiers et les messages WhatsApp finissent toujours par créer des écarts. La démonstration montre une alternative simple, pensée pour le terrain.</p>' +
+    '</div>' +
+    '<div class="grid g4">' +
+      [['file-excel', 'Des données éparpillées', 'Chaque salle tient son fichier. La direction recompose le total à la main.'],
+       ['triangle-exclamation', 'Des erreurs administratives', 'Doublons, oublis de renouvellement, paiements notés deux fois.'],
+       ['stopwatch', 'Un accueil qui ralentit', 'Chercher une fiche pendant qu’un adhérent attend devant le comptoir.'],
+       ['chart-line', 'Une vision en retard', 'Les chiffres du mois arrivent quand il est déjà trop tard pour réagir.']
+      ].map((p, i) => '<article class="card pain hv' + rv(i) + '"><span class="pain-ic">' + ICON(p[0]) + '</span><h3>' + p[1] + '</h3><p class="mut">' + p[2] + '</p></article>').join('') +
+    '</div>' +
+    '<div class="answer rv">' +
+      '<div><span class="eyebrow light">La réponse Jumeaux OS</span><h3 class="serif">« Le bon adhérent, la bonne formule, au bon endroit — en un coup d’œil. »</h3></div>' +
+      '<div class="answer-stats">' +
+        ['<b>1</b><small>fiche par adhérent</small>', '<b>3 s</b><small>par contrôle d’accès</small>', '<b>0</b><small>double saisie</small>', '<b>4</b><small>salles consolidées</small>'].map(x => '<span>' + x + '</span>').join('') +
+      '</div>' +
+    '</div>' +
+    '<p class="tiny center mut" style="margin-top:12px">Objectifs indicatifs d’une organisation correctement configurée — à valider lors du pilote.</p>' +
+  '</section>' +
+
+  // ---------------- Fonctionnalités ----------------
+  '<section class="wrap sec" id="fonctions">' +
+    '<div class="sec-head split">' +
+      '<div><span class="eyebrow">Ce que l’on peut faire</span><h2>Huit briques,<br><span class="serif">une seule expérience.</span></h2></div>' +
+      '<p class="mut max-sm">Chaque écran de la démonstration est cliquable. Rien n’est une maquette figée : les filtres, les scans, les renouvellements et les exports fonctionnent réellement, sur des données fictives.</p>' +
+    '</div>' +
+    '<div class="grid g4">' + features + '</div>' +
+  '</section>' +
+
+  // ---------------- Journée ----------------
+  '<section class="wrap sec">' +
+    '<div class="sec-head"><span class="eyebrow">Une journée avec Jumeaux OS</span><h2>Moins d’allers-retours.<br><span class="serif">Plus de temps pour les adhérents.</span></h2></div>' +
+    '<div class="timeline">' + steps + '</div>' +
+  '</section>' +
+
+  // ---------------- Établissements ----------------
+  '<section class="wrap sec" id="etablissements">' +
+    '<div class="sec-head split"><div><span class="eyebrow">Le réseau</span><h2>Quatre établissements,<br><span class="serif">chacun chez soi.</span></h2></div>' +
+    '<p class="mut max-sm">Une salle garde ses équipes, ses horaires et ses encaissements. La direction voit le total, jamais le désordre.</p></div>' +
+    '<div class="grid g4">' + SALLES.map(etabCard).join('') + '</div>' +
+  '</section>' +
+
+  // ---------------- Essayer ----------------
+  '<section class="wrap sec" id="demo">' +
+    '<div class="sec-head"><span class="eyebrow">Essayez maintenant</span><h2>Trois portes d’entrée.<br><span class="serif">Aucune installation.</span></h2></div>' +
+    '<div class="try-grid">' + entry + '</div>' +
+    '<div class="demo-note rv">' + ICON('wand-magic-sparkles') + '<span><b>Astuce de démonstration.</b> Ouvrez le <a href="#" onclick="startPres();return false;">mode présentation</a> pour un parcours guidé de 12 étapes, ou testez le scanner QR dans le back-office de Keur Massar.</span></div>' +
+  '</section>' +
+
+  // ---------------- Expansion ----------------
+  '<section class="wrap sec">' +
+    '<div class="expansion rv">' +
+      '<div class="exp-copy"><span class="eyebrow light">La suite</span><h2>Ouvrir la 5<sup>e</sup> salle ne devrait pas rouvrir un fichier Excel.</h2>' +
+      '<p>Le réseau est déjà prêt : rôles, formules, règles multi-salles et indicateurs sont communs. La démonstration projette l’impact d’un nouvel établissement en quelques secondes.</p>' +
+      '<button class="btn p" onclick="go({view:\'exp\'})">' + ICON('rocket') + 'Simuler une nouvelle salle</button></div>' +
+      '<div class="exp-nums">' +
+        '<div><small>Adhérents réseau</small><b data-count="' + k.act + '">0</b></div>' +
+        '<div><small>Revenus mensuels</small><b>' + revM + '<em> M</em></b></div>' +
+        '<div><small>Salles connectées</small><b>4<em> / 4</em></b></div>' +
+      '</div>' +
+    '</div>' +
+  '</section>' +
+
+  // ---------------- Conclusion ----------------
+  '<section class="wrap sec">' +
+    '<div class="final rv">' +
+      '<span class="pill dark">' + ICON('circle-check') + 'Prototype prêt à être présenté</span>' +
+      '<h2>Le futur de Jumeaux Fitness<br><span class="serif">commence par une démonstration.</span></h2>' +
+      '<p>Explorez librement, puis cadrons ensemble la vraie plateforme : rôles, tarifs et règles multi-salles.</p>' +
+      '<div class="row gap12 center">' +
+        '<button class="btn p lg shine" onclick="go({view:\'net\'})">' + ICON('arrow-right') + 'Explorer la démonstration</button>' +
+        '<button class="btn ghost lg" onclick="startPres()">' + ICON('play') + 'Lancer la présentation</button>' +
+      '</div>' +
+      '<small class="mut">Prototype commercial · données fictives · fonctionnalités simulées · aucun paiement réel</small>' +
+    '</div>' +
+  '</section>' +
+  '</main>' +
+
+  '<footer class="lfoot"><div class="wrap"><div class="brand small"><span class="mark">' + ICON('dumbbell') + '</span><span class="brand-t">JUMEAUX <b>OS</b></span></div>' +
+  '<p class="mut">Jumeaux Fitness OS — démonstration statique HTML, CSS et JavaScript. Aucun backend, aucune donnée personnelle, aucun paiement réel.</p>' +
+  '<div class="foot-links"><a href="#produit">Le produit</a><a href="#etablissements">Établissements</a><a href="#demo">Démonstration</a><button class="linkbtn" onclick="go({view:\'set\'})">Paramètres</button></div>' +
+  '</div></footer>';
+}
+
+// ---------- Effets : apparition, compteurs, progression ----------
+function count(node) {
+  if (node.dataset.done) return;
+  node.dataset.done = '1';
+  const to = parseFloat(node.dataset.count);
+  const dec = +(node.dataset.dec || 0);
+  const t0 = performance.now();
+  const dur = 1100;
+  const tick = t => {
+    const k = Math.min(1, (t - t0) / dur);
+    const v = to * (1 - Math.pow(1 - k, 3));
+    node.textContent = dec ? v.toFixed(dec).replace('.', ',') : Math.round(v).toLocaleString('fr-FR').replace(/\u202f|\u00a0/g, ' ');
+    if (k < 1) requestAnimationFrame(tick);
+  };
   requestAnimationFrame(tick);
 }
-function initFx(){
-  const io = new IntersectionObserver(es => es.forEach(e => { if(!e.isIntersecting) return; e.target.classList.add('in'); e.target.querySelectorAll('[data-count]').forEach(count); io.unobserve(e.target); }), {threshold:.15});
+
+function initFx() {
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('in');
+      e.target.querySelectorAll('[data-count]').forEach(count);
+      if (e.target.dataset.count) count(e.target);
+      io.unobserve(e.target);
+    });
+  }, { threshold: .12, rootMargin: '0px 0px -40px 0px' });
   document.querySelectorAll('.rv').forEach(n => io.observe(n));
   document.querySelectorAll('.hero [data-count]').forEach(count);
-  onscroll = () => { const p = $('prog'); if(p) p.style.width = scrollY/Math.max(1,document.body.scrollHeight-innerHeight)*100+'%'; };
+  const onScroll = () => {
+    const p = $('prog');
+    if (p) p.style.width = (scrollY / Math.max(1, document.body.scrollHeight - innerHeight) * 100) + '%';
+    document.querySelector('.lnav')?.classList.toggle('scrolled', scrollY > 12);
+  };
+  window.onscroll = onScroll;
+  onScroll();
 }
