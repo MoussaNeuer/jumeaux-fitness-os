@@ -1,7 +1,7 @@
 // ============================================================================
 // Service worker — ressources statiques uniquement, aucune donnée métier
 // ============================================================================
-const V = 'jfos-v4';
+const V = 'jfos-v6';
 const FILES = [
   './',
   './index.html',

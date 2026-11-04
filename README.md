@@ -20,11 +20,19 @@ C’est l’espace principal de la plateforme. Il conserve l’identité émerau
 et consolide l’ensemble du réseau :
 
 - adhérents, revenus, présences, taux d’activité et alertes des quatre salles ;
+- **tableau de bord stratégique** : CA mensuel et annualisé, charges et résultat par salle,
+  marge estimée, impayés, objectifs du mois et prévisions indicatives ;
+- lecture comparée du réseau : Keur Massar peut mener au chiffre d’affaires quand
+  Yeumbeul compte le plus d’adhérents actifs ;
 - flux de passages simulé « en direct », graphiques, classement et objectifs ;
+- **Finance & comptabilité** : journal des encaissements, charges fixes et variables,
+  caisse du jour, rapprochement, rapports par salle et exports Excel / PDF ;
 - recherche globale et exports CSV (adhérents, paiements, présences) ;
 - centre de contrôle qualité : doublons, fiches incomplètes, paiements à vérifier,
   corrections simulées en un clic ;
 - simulateur d’expansion pour préparer une cinquième salle ;
+- **Performance des salles** : comparaison des quatre sites sur un seul écran
+  (actifs, CA, résultat, renouvellements, nouveaux, présences, impayés) ;
 - **Équipe & accès** : gestion simulée des gérants et collaborateurs du réseau.
 
 ### Équipe & accès (direction)
@@ -48,7 +56,12 @@ Chaque salle possède ses adhérents, abonnements, paiements, présences et stat
 
 - Tableau de bord, recherche, filtres, tri et pagination.
 - Création et modification d’adhérents, renouvellement d’abonnement.
-- Enregistrement de paiements, statuts, reçus imprimables et exports.
+- **Abonnements** : formules mensuelle, trimestrielle et annuelle, dates de début et de fin,
+  auto-renouvellement simulé, historique, suspension temporaire, changement de formule,
+  alertes J-7 / J-3 / J-1, listes des expirés, des inactifs et des demandes à traiter.
+- **Paiements** : trois statuts distincts — confirmé (encaissé), déclaré (à vérifier)
+  et en attente (non réglé) — avec rapprochement, reçu imprimable et export.
+- **Caisse** : fond de caisse, encaissements du jour, montant théorique, clôture et écart.
 - Contrôle d’accès par sélecteur ou caméra (selon les API du navigateur).
 
 ### Une identité visuelle par salle
@@ -82,12 +95,34 @@ Connexion de démonstration, carte numérique avec QR, abonnement, historique de
 présences, profil et renouvellement simulé. L’interface est optimisée pour téléphone
 et reprend la couleur de la salle de l’adhérent.
 
+- Alerte d’expiration et demande de renouvellement transmise au gérant.
+- Demande de changement de formule, annulation et préférence d’auto-renouvellement.
+- Historique des renouvellements et téléchargement du dernier reçu.
+- Onglet **Planning** : programme indicatif des cours et réservation de séance simulée
+  (présentée comme une fonctionnalité à confirmer pour la version connectée).
+
+### Finance & comptabilité
+
+- Journal des encaissements avec référence, moyen de paiement et statut.
+- Charges fixes et variables par salle, dépenses du jour, ajout et suppression d’écritures.
+- Caisse quotidienne : fond, encaissements confirmés, théorique, comptage et écart.
+- Rapprochement des paiements déclarés ou en attente avant comptabilisation.
+- Rapports par établissement, synthèse mensuelle, export Excel et impression / PDF.
+- Les montants sont des **hypothèses de simulation**, jamais des comptes réels.
+
+### Performance des salles
+
+Une page unique compare les quatre établissements : adhérents actifs, chiffre d’affaires,
+résultat estimé, marge, renouvellements, nouveaux adhérents, présences, impayés et panier
+moyen. Elle met en évidence les logiques différentes entre volume d’adhérents et revenu.
+
 ### Mode présentation
 
-Parcours guidé en **12 étapes** couvrant la vision, le réseau, l’équipe et les accès,
-une salle, les adhérents, les renouvellements, le contrôle d’accès, les paiements,
-la qualité, l’espace client et l’expansion. Navigation avec les flèches `←` `→`,
-sortie avec `Échap`.
+Parcours guidé en **17 étapes** couvrant la vision, le réseau, la finance consolidée,
+le rapprochement, la performance des salles, l’équipe et les accès, une salle, les adhérents,
+les renouvellements, le contrôle d’accès, les paiements, la qualité, l’espace client,
+la demande de renouvellement, le planning, l’expansion et la décision de pilote.
+Navigation avec les flèches `←` `→`, sortie avec `Échap`.
 
 ## Stack et contraintes
 
@@ -109,10 +144,10 @@ assets/css/responsive.css  adaptations mobile, tablettes et impression
 assets/js/data.js          données fictives, salles, palettes, rôles et comptes
 assets/js/core.js          état, thème de salle, composants, graphiques, QR, exports
 assets/js/landing.js       page commerciale
-assets/js/dashboard.js     réseau, équipe & accès, back-offices, rapports, expansion
-assets/js/actions.js       adhérents, paiements, reçus, scanner, borne
-assets/js/member-portal.js connexion et espace adhérent
-assets/js/presentation.js  parcours guidé en 12 étapes
+assets/js/dashboard.js     réseau, finance, performance, équipe & accès, back-offices, rapports
+assets/js/actions.js       adhérents, abonnements, finance, reçus, scanner, borne
+assets/js/member-portal.js connexion, espace adhérent, planning et demandes
+assets/js/presentation.js  parcours guidé en 17 étapes
 assets/js/app.js           routage par ancre, rendu, horloge, service worker
 assets/fonts/              Inter, Instrument Serif, Font Awesome
 assets/icons/              icônes PWA et favicon
@@ -128,6 +163,8 @@ sw.js                      cache des ressources statiques
 - Seul le thème clair/sombre est conservé dans `localStorage`.
 - Le bouton de réinitialisation du back-office recharge les données initiales.
 - Les exports CSV sont produits localement par le navigateur.
+- Les exports financiers sont générés en `.xls` (tableau HTML compatible Excel) ou via
+  l’impression du navigateur pour un PDF. Aucun fichier n’est envoyé.
 
 ## Accessibilité et performance
 
@@ -154,3 +191,7 @@ de contrat, pas de synchronisation entre appareils. La gestion des accès, la 2F
 sessions sont illustrées par l’interface mais ne sont pas appliquées techniquement.
 La lecture caméra dépend du navigateur. Les tarifs, rôles et règles multi-salles restent
 à valider avant le pilote réel.
+
+Les chiffres financiers, charges, objectifs et prévisions sont des **hypothèses de
+simulation**. Ils ne constituent ni des comptes réels ni une promesse de gain. Ils doivent
+être confrontés aux vrais volumes et factures de Jumeaux Fitness avant toute décision.

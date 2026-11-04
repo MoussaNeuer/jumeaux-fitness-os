@@ -357,3 +357,64 @@
   .team-actions .btn { flex: 1 1 100%; }
 }
 
+/* ---------- Finance, performance, abonnements, dossier ---------- */
+@media (max-width: 1180px) {
+  .sub-alerts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .insight { grid-template-columns: auto minmax(0, 1fr); }
+  .insight-facts { grid-column: 1 / -1; padding-left: 66px; }
+}
+@media (max-width: 1024px) {
+  .pitch-grid { grid-template-columns: 1fr; }
+  .cash-split { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .insight { padding: 18px; gap: 14px; }
+  .insight-ic { width: 42px; height: 42px; font-size: 16px; }
+  .insight-facts { padding-left: 56px; }
+  .pitch-final { flex-direction: column; align-items: flex-start; }
+  .pitch-final .row { width: 100%; }
+  .pitch-final .btn { flex: 1 1 auto; }
+}
+@media (max-width: 760px) {
+  .insight { grid-template-columns: 1fr; }
+  .insight-ic { width: 40px; height: 40px; }
+  .insight-facts { padding-left: 0; }
+  .sub-alerts { grid-template-columns: 1fr 1fr; gap: 9px; }
+  .sub-alert { padding: 11px 12px; gap: 8px; }
+  .sub-alert-n { min-width: 33px; height: 33px; font-size: 15px; }
+  .sub-alert > i { display: none; }
+  .obj-row { flex-wrap: wrap; gap: 6px 8px; }
+  .obj-row > b { width: auto; flex: 1 1 auto; }
+  .obj-row .progress { flex: 1 1 100%; order: 3; }
+  .obj-row > small { width: auto; flex: 0 0 auto; text-align: left; order: 4; }
+  .fc-row { grid-template-columns: 1fr; }
+  .fc-month { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; }
+  .fc-month small { grid-column: 1; }
+  .fc-month b { grid-column: 1; }
+  .fc-month > span { grid-column: 2; grid-row: 1; text-align: right; }
+  .fc-month em { grid-column: 2; grid-row: 2; text-align: right; }
+  .fin-states { grid-template-columns: 1fr; }
+  .fin-legend { gap: 8px 16px; font-size: 10.5px; }
+  .cash-recon { grid-template-columns: 1fr; }
+  .recon-grid { grid-template-columns: 1fr 1fr; }
+  .fin-report .recon-grid { grid-template-columns: 1fr 1fr; }
+  .perf-mini { gap: 2px; }
+  .pitch-card { padding: 22px; }
+  .pitch-num { font-size: 38px; top: 12px; right: 16px; }
+  .pitch-final { padding: 26px 22px; border-radius: 20px; }
+  .pitch-final .row { flex-direction: column; }
+  .pitch-final .btn { width: 100%; }
+  .p-course { grid-template-columns: 56px minmax(0, 1fr); }
+  .p-course-act { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
+}
+@media (max-width: 520px) {
+  .sub-alerts { grid-template-columns: 1fr; }
+  .pitch-benefits { grid-template-columns: 1fr; }
+  .deploy-step { grid-template-columns: 26px minmax(0, 1fr); }
+  .deploy-step em { grid-column: 2; justify-self: start; }
+  .fin-states { grid-template-columns: 1fr; }
+  .cash-split { grid-template-columns: 1fr 1fr; }
+  .pitch-final h3 { font-size: 23px; }
+}
+
+

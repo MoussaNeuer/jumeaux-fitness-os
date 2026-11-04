@@ -5,6 +5,8 @@
 const TITLES = {
   land: 'Jumeaux Fitness OS — Le réseau fitness, enfin connecté',
   net: 'Vue générale du réseau — Jumeaux Fitness OS',
+  fin: 'Finance & comptabilité — Jumeaux Fitness OS',
+  perf: 'Performance des salles — Jumeaux Fitness OS',
   team: 'Équipe & accès — Jumeaux Fitness OS',
   etab: 'Établissements — Jumeaux Fitness OS',
   exp: 'Expansion — Jumeaux Fitness OS',
@@ -32,6 +34,8 @@ function render() {
   if (v === 'land') root.innerHTML = landing();
   else if (v === 'portal') root.innerHTML = portal();
   else if (v === 'net') root.innerHTML = shell(viewNet());
+  else if (v === 'fin') root.innerHTML = shell(viewFin());
+  else if (v === 'perf') root.innerHTML = shell(viewPerf());
   else if (v === 'team') root.innerHTML = shell(viewTeam());
   else if (v === 'etab') root.innerHTML = shell(viewEtab());
   else if (v === 'exp') root.innerHTML = shell(viewExp());

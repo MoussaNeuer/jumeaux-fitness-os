@@ -26,6 +26,22 @@ function ensureDemoHistory(m) {
   }
 }
 
+const JOURS_SEM = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+function nextCourseDate(jour) {
+  const cur = AUJ.getDay() || 7;
+  return addDays(((jour - cur) + 7) % 7);
+}
+
+function expBanner(m, jr) {
+  if (jr < 0) {
+    return '<div class="p-banner ko"><span class="p-banner-ic">' + ICON('triangle-exclamation') + '</span><div><b>Votre abonnement a expiré</b><small>Depuis ' + Math.abs(jr) + ' jour(s). L’accès à la salle est simulé comme bloqué.</small></div><button class="btn s danger" onclick="requestMe(\'renouvellement\')">Renouveler</button></div>';
+  }
+  if (jr <= 7) {
+    return '<div class="p-banner warn"><span class="p-banner-ic">' + ICON('bell') + '</span><div><b>Votre abonnement expire dans ' + jr + ' jour' + (jr > 1 ? 's' : '') + '</b><small>Demandez votre renouvellement dès maintenant pour garder votre accès.</small></div><button class="btn s" onclick="requestMe(\'renouvellement\')">Demander</button></div>';
+  }
+  return '';
+}
+
 function portal() {
   const m = portalMember();
   ensureDemoHistory(m);
@@ -41,6 +57,7 @@ function portal() {
   const sbar = '<div class="statusbar"><span>' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + '</span><span class="statusbar-l"><i class="fa-solid fa-signal"></i><i class="fa-solid fa-wifi"></i><i class="fa-solid fa-battery-full"></i></span></div>';
 
   const home = '<div class="p-hello"><span>' + hello + ',</span><h2>' + esc(m.nom.split(' ')[0]) + '</h2><small>' + dayLabel(new Date()) + '</small></div>' +
+    expBanner(m, jr) +
     '<div class="idc">' +
       '<div class="idc-top"><span class="idc-brand">' + ICON('dumbbell') + ' JUMEAUX FITNESS</span><span class="badge ' + (statut(m) === 'actif' ? 'b-ok' : 'b-warn') + '">' + esc(statut(m) === 'actif' ? 'Actif' : 'Expire bientôt') + '</span></div>' +
       '<div class="idc-name"><b>' + esc(m.nom) + '</b><span>' + m.id + ' · ' + esc(d.nom) + '</span></div>' +
@@ -59,22 +76,35 @@ function portal() {
       D[m.home].pre.filter(x => x.m === m.id).slice(-3).reverse().map(x => '<div class="p-visit"><span class="p-vic">' + ICON('dumbbell') + '</span><span><b>' + dayLabel(x.at) + '</b><small>' + hhmm(x.at) + ' · ' + d.nom + '</small></span>' + bdg('autorisé') + '</div>').join('') +
       '</div>';
 
+  const pending = m.demande && m.demande.statut === 'à traiter' ? m.demande : null;
+  const hist = (m.renouv || []).slice().sort((a, b) => b.date - a.date).slice(0, 5);
   const abo = '<div class="p-hello"><span>Mon abonnement</span><h2>' + p.n + '</h2><small>Formule fictive · ' + fmt(p.p) + '</small></div>' +
+    expBanner(m, jr) +
     '<div class="card p-plan" style="--pc:' + p.c + '"><div class="row sp"><span class="plan-name">' + p.n + '</span><span class="badge ' + (jr >= 0 ? 'b-ok' : 'b-ko') + '">' + (jr >= 0 ? 'En cours' : 'Expiré') + '</span></div>' +
       '<b class="plan-price">' + fmt(p.p) + '</b><span class="tiny mut">' + p.j + ' jours · ' + p.d + '</span>' +
-      '<div class="p-plan-dates"><span><small>Début</small><b>' + dstr(new Date(+m.exp - p.j * J)) + '</b></span><span><small>Fin</small><b>' + dstr(m.exp) + '</b></span></div>' +
+      '<div class="p-plan-dates"><span><small>Début</small><b>' + dstr(m.debut || new Date(+m.exp - p.j * J)) + '</b></span><span><small>Fin</small><b>' + dstr(m.exp) + '</b></span></div>' +
       '<div class="progress lg"><i style="width:' + Math.max(3, Math.min(100, jr / p.j * 100)) + '%"></i></div>' +
-      '<span class="tiny mut">' + (jr >= 0 ? jr + ' jours restants' : 'Expiré depuis ' + Math.abs(jr) + ' jours') + '</span></div>' +
+      '<span class="tiny mut">' + (jr >= 0 ? jr + ' jours restants' : 'Expiré depuis ' + Math.abs(jr) + ' jours') + '</span>' +
+      '<label class="switch-row"><span><b>Renouvellement automatique</b><small>Simulé — aucun prélèvement réel</small></span><input type="checkbox" ' + (m.autoRenew ? 'checked' : '') + ' onchange="toggleAutoMe()"></label>' +
+    '</div>' +
+    (pending
+      ? '<div class="card p-info p-pending"><h3>' + ICON('clock-rotate-left') + ' Demande en attente</h3><p class="tiny mut">' + (pending.type === 'changement' ? 'Changement vers ' + PLANS[pending.plan].n : 'Renouvellement ' + PLANS[pending.plan].n) + ' · envoyée le ' + dstr(pending.at) + '. Le gérant doit la traiter.</p><button class="btn s w" onclick="cancelMe()">Annuler ma demande</button></div>'
+      : '<div class="row gap6" style="margin-bottom:10px"><button class="btn p" style="flex:1" onclick="requestMe(\'renouvellement\')">' + ICON('rotate') + 'Demander un renouvellement</button><button class="btn" onclick="openPlanMe()">' + ICON('shuffle') + 'Changer</button></div>') +
     '<div class="card p-info"><h3>Accès & avantages</h3><ul class="checklist">' +
       ['Accès à ' + esc(d.nom), m.multi ? 'Accès multi-salles inclus' : 'Salle unique (option multi-salles disponible)', 'Carte numérique et QR personnel', 'Reçus disponibles dans l’espace personnel'].map(x => '<li>' + ICON('circle-check') + x + '</li>').join('') + '</ul></div>' +
-    '<button class="btn p w lg" onclick="renewMe()">' + ICON('arrows-rotate') + 'Simuler un renouvellement</button>' +
-    '<p class="tiny center mut">Aucun paiement réel. Le renouvellement met simplement à jour la démonstration.</p>';
+    '<div class="card p-info"><div class="row sp"><h3>Historique</h3><span class="badge b-off">' + hist.length + '</span></div>' +
+      (hist.length ? hist.map(r => '<div class="p-visit"><span class="p-vic">' + ICON(r.type === 'changement' ? 'shuffle' : 'rotate') + '</span><span><b>' + (r.type === 'changement' ? 'Changement de formule' : 'Renouvellement') + ' · ' + PLANS[r.plan].n + '</b><small>' + dstr(r.date) + (r.montant ? ' · ' + fmt(r.montant) : '') + '</small></span></div>').join('') : '<p class="tiny mut">Aucun renouvellement pour le moment.</p>') +
+    '</div>' +
+    '<button class="btn w" onclick="renewMe()">' + ICON('bolt') + 'Simuler un renouvellement immédiat</button>' +
+    '<p class="tiny center mut">Aucun paiement réel. La demande est transmise au gérant de la salle dans cette démonstration.</p>';
 
   const pays = D[m.home].pay.filter(x => x.m === m.id).slice(0, 8);
   const total = pays.filter(x => x.st === 'confirmé').reduce((a, x) => a + x.montant, 0);
+  const lastReceipt = pays.find(x => x.st === 'confirmé');
   const pay = '<div class="p-hello"><span>Mes paiements</span><h2>' + fmt(total) + '</h2><small>Historique fictif · ' + d.nom + '</small></div>' +
     '<div class="card p-pay-list">' + (pays.length ? pays.map(x => '<button class="p-pay" onclick="receiptRef(\'' + x.ref + '\')"><span class="p-pay-ic">' + ICON(MOYENS_ICON[x.moyen] || 'wallet') + '</span><span><b>' + fmt(x.montant) + '</b><small>' + dstr(x.date) + ' · ' + x.moyen + '</small></span>' + bdg(x.st) + ICON('chevron-right') + '</button>').join('') : emptyState('receipt', 'Aucun paiement', 'Votre historique apparaîtra ici.')) + '</div>' +
-    '<button class="btn w" onclick="exportCSV(\'paiements\')">' + ICON('file-csv') + 'Exporter mes paiements</button>';
+    (lastReceipt ? '<button class="btn p w" onclick="downloadReceipt(\'' + lastReceipt.ref + '\')">' + ICON('download') + 'Télécharger mon dernier reçu</button>' : '') +
+    '<button class="btn w" style="margin-top:8px" onclick="exportCSV(\'paiements\')">' + ICON('file-csv') + 'Exporter mes paiements</button>';
 
   const visits = D[m.home].pre.filter(x => x.m === m.id).slice().reverse().slice(0, 12);
   const week = [0, 1, 2, 3, 4, 5, 6].map(i => visits.filter(x => +new Date(x.at) >= +AUJ - i * J && +new Date(x.at) < +AUJ - (i - 1) * J).length);
@@ -82,6 +112,15 @@ function portal() {
     '<div class="card"><div class="row sp"><b>Cette semaine</b><span class="badge b-ok">' + week.reduce((a, b) => a + b, 0) + ' passages</span></div>' +
       '<div class="p-week">' + week.slice().reverse().map((v, i) => '<span><i style="height:' + Math.max(6, v / Math.max(1, ...week) * 48) + 'px"></i><small>' + JOURS[i] + '</small></span>').join('') + '</div></div>' +
     '<div class="card p-pay-list">' + (visits.length ? visits.map(x => '<div class="p-pay"><span class="p-pay-ic">' + ICON('dumbbell') + '</span><span><b>' + dayLabel(x.at) + '</b><small>' + hhmm(x.at) + ' · ' + d.nom + '</small></span>' + bdg(x.ok ? 'autorisé' : 'refusé') + '</div>').join('') : emptyState('dumbbell', 'Aucune visite', 'Votre historique apparaîtra ici.')) + '</div>';
+
+  const plan = '<div class="p-hello"><span>Planning</span><h2>Activités</h2><small>Programme indicatif · ' + d.nom + '</small></div>' +
+    '<div class="p-planning">' + COURS.map(c => {
+      const booked = (m.resas || []).includes(c.id);
+      return '<div class="p-course' + (booked ? ' booked' : '') + '"><div class="p-course-date"><b>' + dstr(nextCourseDate(c.jour)) + '</b><small>' + JOURS_SEM[c.jour - 1] + ' · ' + c.h + '</small></div>' +
+        '<div class="p-course-body"><b>' + esc(c.n) + '</b><small>' + esc(c.coach) + ' · ' + esc(c.salle) + ' · ' + c.duree + ' min</small></div>' +
+        '<div class="p-course-act"><span class="badge b-off">' + c.places + ' pl.</span><button class="btn s ' + (booked ? 'p' : '') + '" onclick="bookCourse(\'' + c.id + '\')">' + (booked ? 'Annuler' : 'Réserver') + '</button></div></div>';
+    }).join('') + '</div>' +
+    '<div class="card p-info"><h3>Réservation de séance</h3><p class="tiny mut">La réservation est indicative dans cette démonstration : aucune place réelle n’est bloquée. La version connectée pourra confirmer la présence et envoyer un rappel.</p></div>';
 
   const prof = '<div class="p-hello"><span>Mon compte</span><h2>' + esc(m.nom.split(' ')[0]) + '</h2><small>' + m.id + ' · membre depuis ' + dstr(m.inscription) + '</small></div>' +
     '<div class="card"><div class="row gap12" style="align-items:center">' + avatar(m.nom, 'big') + '<div><b>' + esc(m.nom) + '</b><br><small class="mut">' + esc(m.mail || 'Sans e-mail') + '</small></div></div>' +
@@ -93,8 +132,8 @@ function portal() {
     '<button class="btn w" onclick="S.logged=false;S.ptab=\'home\';render()">' + ICON('right-from-bracket') + 'Quitter le mode démo</button>' +
     '<p class="tiny center mut">Espace personnel de démonstration — aucune donnée réelle.</p>';
 
-  const content = { home, abo, pay, pre, prof }[S.ptab] || home;
-  const nav = [['home', 'house', 'Accueil'], ['abo', 'id-card', 'Abonnement'], ['pay', 'receipt', 'Paiements'], ['pre', 'dumbbell', 'Présences'], ['prof', 'user', 'Profil']]
+  const content = { home, abo, pay, pre, plan, prof }[S.ptab] || home;
+  const nav = [['home', 'house', 'Accueil'], ['abo', 'id-card', 'Abonnement'], ['pay', 'receipt', 'Paiements'], ['pre', 'dumbbell', 'Présences'], ['plan', 'calendar-days', 'Planning'], ['prof', 'user', 'Profil']]
     .map(t => '<button class="' + (S.ptab === t[0] ? 'on' : '') + '" onclick="S.ptab=\'' + t[0] + '\';render()">' + ICON(t[1]) + '<span>' + t[2] + '</span></button>').join('');
 
   return '<div class="portal-wrap"><div class="portal-side"><a class="brand" href="#" onclick="go({view:\'land\'});return false;"><span class="mark">' + ICON('dumbbell') + '</span><span class="brand-t">JUMEAUX <b>OS</b></span></a>' +
@@ -145,10 +184,70 @@ function bigQr() {
 }
 function renewMe() {
   const m = portalMember(), d = D[m.home], p = PLANS[m.plan];
-  m.exp = new Date(+Math.max(+AUJ, +m.exp) + p.j * J);
+  m.debut = new Date(+Math.max(+AUJ, +m.exp));
+  m.exp = new Date(+m.debut + p.j * J);
+  m.susp = false;
+  m.renouv = m.renouv || [];
+  m.renouv.unshift({ date: new Date(), plan: m.plan, montant: p.p, moyen: 'Wave', type: 'renouvellement' });
+  if (m.demande) { m.demande = null; }
   d.pay.unshift({ ref: 'REC-' + m.id + '-R' + Date.now().toString().slice(-3), m: m.id, montant: p.p, moyen: 'Wave', date: new Date(), st: 'confirmé', agent: 'Espace adhérent' });
   d.act.unshift(['Abonnement renouvelé', m.nom]);
   journal('Renouvellement adhérent', m.nom + ' · ' + p.n);
   recalc(); render();
   toast('Renouvellement simulé · reçu disponible', 'ok');
+}
+
+function requestMe(type) {
+  const m = portalMember();
+  if (m.demande && m.demande.statut === 'à traiter') return toast('Une demande est déjà en attente de traitement', 'warn');
+  m.demande = { type: type || 'renouvellement', plan: m.plan, at: new Date(), statut: 'à traiter' };
+  journal('Demande adhérent', m.nom + ' · ' + (m.demande.type === 'changement' ? 'changement de formule' : 'renouvellement'));
+  recalc(); render();
+  toast('Demande transmise au gérant (simulation)', 'ok');
+}
+
+function cancelMe() {
+  const m = portalMember();
+  if (!m.demande) return;
+  m.demande = null;
+  journal('Demande annulée', m.nom);
+  recalc(); render();
+  toast('Demande annulée', 'warn');
+}
+
+function toggleAutoMe() {
+  const m = portalMember();
+  m.autoRenew = !m.autoRenew;
+  journal('Renouvellement automatique ' + (m.autoRenew ? 'activé' : 'désactivé'), m.nom);
+  recalc(); render();
+  toast('Préférence de renouvellement enregistrée (démo)', 'ok');
+}
+
+function openPlanMe() {
+  const m = portalMember();
+  openModal('<h3>Changer de formule</h3><p class="tiny mut">Votre demande sera transmise au gérant de ' + esc(D[m.home].nom) + '.</p>' +
+    '<div class="f"><label>Formule souhaitée<select id="mePlan">' + PLANS.map((p, i) => '<option value="' + i + '"' + (i === m.plan ? ' selected' : '') + '>' + p.n + ' — ' + fmt(p.p) + ' · ' + p.j + ' jours</option>').join('') + '</select></label></div>' +
+    '<div class="row gap8" style="margin-top:16px"><button class="btn p" onclick="savePlanMe()">' + ICON('paper-plane') + 'Envoyer la demande</button><button class="btn" onclick="closeModal()">Annuler</button></div>' +
+    '<p class="tiny mut" style="margin-top:10px">Aucun paiement n’est déclenché. Le changement est une demande simulée.</p>',
+    { title: 'Changer de formule' });
+}
+
+function savePlanMe() {
+  const m = portalMember();
+  const next = +$('mePlan').value;
+  if (next === m.plan) { closeModal(); return toast('Vous avez déjà cette formule', 'warn'); }
+  m.demande = { type: 'changement', plan: next, at: new Date(), statut: 'à traiter' };
+  journal('Demande de changement de formule', m.nom + ' → ' + PLANS[next].n);
+  recalc(); closeModal(); render();
+  toast('Demande de changement envoyée (simulation)', 'ok');
+}
+
+function bookCourse(id) {
+  const m = portalMember();
+  m.resas = m.resas || [];
+  const i = m.resas.indexOf(id);
+  if (i >= 0) m.resas.splice(i, 1); else m.resas.push(id);
+  journal(i >= 0 ? 'Réservation annulée' : 'Séance réservée', m.nom + ' · ' + (COURS.find(c => c.id === id) || {}).n);
+  render();
+  toast(i >= 0 ? 'Réservation annulée (simulation)' : 'Séance réservée (simulation)', i >= 0 ? 'warn' : 'ok');
 }

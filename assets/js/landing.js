@@ -161,6 +161,58 @@ function landing() {
     '<p class="tiny center mut" style="margin-top:12px">Objectifs indicatifs d’une organisation correctement configurée — à valider lors du pilote.</p>' +
   '</section>' +
 
+  // ---------------- Dossier commercial 01–04 ----------------
+  '<section class="wrap sec" id="dossier">' +
+    '<div class="sec-head">' +
+      '<span class="eyebrow">Le dossier de présentation</span>' +
+      '<h2>Du problème constaté<br><span class="serif">au déploiement progressif.</span></h2>' +
+      '<p class="mut max-md">Une trame simple à présenter au PDG : ce qui bloque aujourd’hui, ce que la plateforme propose, les bénéfices attendus — en scénarios, jamais en promesses — et la méthode de mise en service.</p>' +
+    '</div>' +
+    '<div class="pitch-grid">' +
+      '<article class="card pitch-card hv' + rv(0) + '"><span class="pitch-num">01</span><span class="pitch-ic">' + ICON('triangle-exclamation') + '</span>' +
+        '<h3>Les problèmes actuels</h3><p class="mut">Le réseau grandit, mais les outils restent artisanaux.</p>' +
+        '<ul class="pitch-list">' +
+          ['Fichiers Excel séparés par salle, consolidés à la main', 'Renouvellements oubliés et paiements notés deux fois', 'Aucune vision fiable des impayés et de la caisse du jour', 'Accueil ralenti par la recherche de fiches', 'Décisions prises sur des chiffres déjà périmés'].map(x => '<li>' + ICON('circle-xmark') + x + '</li>').join('') +
+        '</ul>' +
+        '<div class="pitch-scenario warn">' + ICON('calculator') + '<span><b>Coût du statu quo :</b> à chiffrer ensemble avec les vrais volumes. La démonstration ne prétend pas connaître les pertes réelles de Jumeaux Fitness.</span></div>' +
+      '</article>' +
+      '<article class="card pitch-card hv' + rv(1) + '"><span class="pitch-num">02</span><span class="pitch-ic">' + ICON('layer-group') + '</span>' +
+        '<h3>La solution proposée</h3><p class="mut">Une plateforme unique, des espaces adaptés à chaque rôle.</p>' +
+        '<ul class="pitch-list">' +
+          ['Direction : consolidé financier, performance des quatre salles, alertes', 'Gérant : adhérents, abonnements, caisse et rapprochement', 'Accueil : QR d’accès, encaissement, reçu immédiat', 'Adhérent : carte numérique, paiement, présences, planning', 'Exports Excel / PDF et journal des opérations'].map(x => '<li>' + ICON('circle-check') + x + '</li>').join('') +
+        '</ul>' +
+        '<button class="btn s w" style="margin-top:12px" onclick="go({view:\'net\'})">' + ICON('arrow-right') + 'Voir la plateforme en action</button>' +
+      '</article>' +
+      '<article class="card pitch-card hv' + rv(2) + '"><span class="pitch-num">03</span><span class="pitch-ic">' + ICON('chart-line') + '</span>' +
+        '<h3>Les bénéfices attendus</h3><p class="mut">Des objectifs mesurables, présentés comme des hypothèses.</p>' +
+        '<div class="pitch-benefits">' +
+          '<span><b>−50 %</b><small>temps de recherche d’une fiche <em>objectif pilote</em></small></span>' +
+          '<span><b>+5 à 10 pts</b><small>recouvrement simulé <em>hypothèse</em></small></span>' +
+          '<span><b>100 %</b><small>des relances tracées <em>objectif</em></small></span>' +
+          '<span><b>1 écran</b><small>pour comparer les 4 salles <em>démo</em></small></span>' +
+        '</div>' +
+        '<div class="pitch-scenario info">' + ICON('flask') + '<span><b>Scénarios à valider :</b> les montants et pourcentages varient selon les tarifs, la saisonnalité et la discipline de caisse. Aucun gain n’est garanti.</span></div>' +
+      '</article>' +
+      '<article class="card pitch-card pitch-deploy hv' + rv(3) + '"><span class="pitch-num">04</span><span class="pitch-ic">' + ICON('route') + '</span>' +
+        '<h3>Le plan de déploiement</h3><p class="mut">Cinq étapes, une salle pilote, puis une montée progressive.</p>' +
+        '<div class="deploy">' +
+          [['1', 'Présentation', 'Démonstration au PDG et aux gérants.', '1 h'],
+           ['2', 'Validation', 'Périmètre, tarifs, rôles et règles multi-salles.', '1 semaine'],
+           ['3', 'Développement', 'Adaptation aux vrais processus et données.', '4–6 semaines'],
+           ['4', 'Tests sur une salle', 'Pilote à Keur Massar, formation et corrections.', '3–4 semaines'],
+           ['5', 'Déploiement progressif', 'Extension aux trois autres salles, site par site.', '2–3 semaines']].map(s =>
+            '<div class="deploy-step"><span class="deploy-n">' + s[0] + '</span><div><b>' + s[1] + '</b><small>' + s[2] + '</small></div><em>' + s[3] + '</em></div>').join('') +
+        '</div>' +
+        '<div class="pitch-scenario ok">' + ICON('flag-checkered') + '<span><b>Décision go / no-go</b> après le pilote, sur des critères validés ensemble — pas sur une promesse commerciale.</span></div>' +
+      '</article>' +
+    '</div>' +
+    '<div class="pitch-final rv">' +
+      '<div><span class="eyebrow light">Prochaine étape</span><h3 class="serif">Valider les hypothèses avec les vrais chiffres Jumeaux Fitness.</h3>' +
+      '<p>La démonstration est prête. Il reste à confronter les tarifs, charges, impayés et objectifs aux données réelles, puis à cadrer le pilote.</p></div>' +
+      '<div class="row gap8 wrap-row"><button class="btn p" onclick="go({view:\'fin\'})">' + ICON('scale-balanced') + 'Ouvrir la finance</button><button class="btn ghost" onclick="startPres()">' + ICON('play') + 'Lancer la présentation</button></div>' +
+    '</div>' +
+  '</section>' +
+
   // ---------------- Fonctionnalités ----------------
   '<section class="wrap sec" id="fonctions">' +
     '<div class="sec-head split">' +
@@ -187,7 +239,7 @@ function landing() {
   '<section class="wrap sec" id="demo">' +
     '<div class="sec-head"><span class="eyebrow">Essayez maintenant</span><h2>Trois portes d’entrée.<br><span class="serif">Aucune installation.</span></h2></div>' +
     '<div class="try-grid">' + entry + '</div>' +
-    '<div class="demo-note rv">' + ICON('wand-magic-sparkles') + '<span><b>Astuce de démonstration.</b> Ouvrez le <a href="#" onclick="startPres();return false;">mode présentation</a> pour un parcours guidé de 12 étapes, ou testez le scanner QR dans le back-office de Keur Massar.</span></div>' +
+    '<div class="demo-note rv">' + ICON('wand-magic-sparkles') + '<span><b>Astuce de démonstration.</b> Ouvrez le <a href="#" onclick="startPres();return false;">mode présentation</a> pour un parcours guidé de 17 étapes, ou testez le scanner QR dans le back-office de Keur Massar.</span></div>' +
   '</section>' +
 
   // ---------------- Expansion ----------------

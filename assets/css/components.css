@@ -117,7 +117,7 @@ body.pres #toast { bottom: 220px; }
 .pb .card h3 { font-size: 13px; }
 .pb .card .progress { margin: 9px 0 5px; }
 .pnav {
-  display: grid; grid-template-columns: repeat(5, 1fr);
+  display: grid; grid-template-columns: repeat(6, 1fr);
   border-top: 1px solid var(--bd);
   background: color-mix(in srgb, var(--card) 94%, transparent);
   backdrop-filter: blur(12px);
@@ -205,6 +205,38 @@ body.pres #toast { bottom: 220px; }
 .p-week span { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; }
 .p-week i { width: 100%; max-width: 18px; border-radius: 5px 5px 2px 2px; background: linear-gradient(180deg, var(--g2), var(--g)); }
 .p-week small { font-size: 7.5px; color: var(--mut); text-transform: uppercase; }
+
+/* Bandeaux d'alerte de l'espace adhérent */
+.p-banner { display: flex; align-items: center; gap: 9px; padding: 10px 11px; border-radius: 12px; border: 1px solid var(--bd); background: var(--card); font-size: 9.5px; line-height: 1.4; }
+.p-banner-ic { display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 28px; border-radius: 8px; background: var(--bg-2); font-size: 11px; }
+.p-banner > div { flex: 1; min-width: 0; }
+.p-banner b { display: block; font-size: 10.5px; }
+.p-banner small { display: block; font-size: 8.5px; color: var(--mut); }
+.p-banner .btn { flex: 0 0 auto; }
+.p-banner.warn { border-color: color-mix(in srgb, var(--org) 26%, transparent); background: var(--org-soft); }
+.p-banner.warn .p-banner-ic { background: color-mix(in srgb, var(--org) 16%, transparent); color: var(--org); }
+.p-banner.ko { border-color: color-mix(in srgb, var(--red) 26%, transparent); background: var(--red-soft); }
+.p-banner.ko .p-banner-ic { background: color-mix(in srgb, var(--red) 16%, transparent); color: var(--red); }
+
+/* Demande en attente */
+.p-pending { border-color: color-mix(in srgb, var(--org) 30%, var(--bd)); }
+.p-pending h3 { display: flex; align-items: center; gap: 6px; }
+.p-pending h3 i { color: var(--org); }
+.p-pending .btn { margin-top: 8px; }
+
+/* Planning & réservation */
+.p-planning { display: grid; gap: 8px; }
+.p-course { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 10px; border-radius: 12px; border: 1px solid var(--bd); background: var(--card); }
+.p-course.booked { border-color: color-mix(in srgb, var(--g) 38%, var(--bd)); background: color-mix(in srgb, var(--g) 5%, var(--card)); }
+.p-course-date { padding: 6px 5px; border-radius: 8px; border: 1px solid var(--bd); background: var(--bg-2); text-align: center; }
+.p-course-date b { display: block; font-size: 9px; line-height: 1.2; }
+.p-course-date small { display: block; margin-top: 1px; font-size: 7px; color: var(--mut); }
+.p-course-body { min-width: 0; }
+.p-course-body b { display: block; font-size: 10.5px; }
+.p-course-body small { display: block; font-size: 8px; line-height: 1.35; color: var(--mut); }
+.p-course-act { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.p-course-act .badge { font-size: 7.5px; padding: 1px 6px; }
+.p-course-act .btn { min-height: 26px; padding: 3px 8px; font-size: 9px; border-radius: 7px; }
 
 .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--bd); cursor: pointer; }
 .switch-row:last-child { border-bottom: 0; }

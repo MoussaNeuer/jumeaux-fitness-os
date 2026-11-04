@@ -3,15 +3,16 @@
 // ============================================================================
 
 const MENU = [
-  { g: 'Direction', items: [['net', 'chart-pie', 'Vue générale'], ['team', 'user-shield', 'Équipe & accès'], ['etab', 'location-dot', 'Établissements'], ['exp', 'rocket', 'Expansion']] },
+  { g: 'Direction', items: [['net', 'chart-pie', 'Vue générale'], ['fin', 'scale-balanced', 'Finance & comptabilité'], ['team', 'user-shield', 'Équipe & accès'], ['etab', 'location-dot', 'Établissements'], ['exp', 'rocket', 'Expansion']] },
   { g: 'Opérations', items: [['mem', 'users', 'Adhérents'], ['abo', 'arrows-rotate', 'Abonnements'], ['pay', 'money-bill-wave', 'Paiements'], ['pre', 'qrcode', 'Contrôles d’accès'], ['qual', 'shield-halved', 'Qualité des données']] },
-  { g: 'Analyse', items: [['rap', 'file-lines', 'Rapports'], ['set', 'gear', 'Paramètres']] }
+  { g: 'Analyse', items: [['perf', 'ranking-star', 'Performance des salles'], ['rap', 'file-lines', 'Rapports'], ['set', 'gear', 'Paramètres']] }
 ];
 const TAB_LABEL = { dash: 'Tableau de bord', mem: 'Adhérents', abo: 'Abonnements', pay: 'Paiements', pre: 'Contrôles d’accès', qual: 'Qualité des données' };
 
 function navBadge(k) {
   if (k === 'qual') { const n = anomaliesNet().total; return n ? '<span class="nav-badge">' + n + '</span>' : ''; }
   if (k === 'abo') { const n = net.soon + net.exp; return n ? '<span class="nav-badge">' + n + '</span>' : ''; }
+  if (k === 'fin') { const n = net.declares + net.attente; return n ? '<span class="nav-badge">' + Math.round(n / 1000) + 'k</span>' : ''; }
   return '';
 }
 
@@ -32,7 +33,7 @@ function shell(body) {
 
   const crumb = inSalle
     ? '<a href="#" onclick="go({view:\'net\'});return false;">Réseau</a><i class="fa-solid fa-chevron-right"></i><b>' + esc(salle.nom) + '</b><i class="fa-solid fa-chevron-right"></i><span>' + (TAB_LABEL[S.tab] || '') + '</span>'
-    : '<b>' + ({ net: 'Vue générale', team: 'Équipe & accès', etab: 'Établissements', exp: 'Expansion', rap: 'Rapports', set: 'Paramètres' }[S.view] || 'Réseau') + '</b>';
+    : '<b>' + ({ net: 'Vue générale', fin: 'Finance & comptabilité', perf: 'Performance des salles', team: 'Équipe & accès', etab: 'Établissements', exp: 'Expansion', rap: 'Rapports', set: 'Paramètres' }[S.view] || 'Réseau') + '</b>';
 
   return '<div class="app' + (S.col ? ' col' : '') + '">' +
     '<aside class="side" aria-label="Navigation de l’application">' +
@@ -70,7 +71,7 @@ function shell(body) {
 }
 
 function nav(k) {
-  if (['net', 'team', 'etab', 'exp', 'rap', 'set'].includes(k)) go({ view: k });
+  if (['net', 'fin', 'perf', 'team', 'etab', 'exp', 'rap', 'set'].includes(k)) go({ view: k });
   else go({ view: 'salle', tab: k, page: 0 });
 }
 function pick(v) {
@@ -106,63 +107,414 @@ function openNotifs() {
 }
 
 // ---------------------------------------------------------------- RÉSEAU
+function forecastNet() {
+  return [0, 1, 2].map(i => SALLES.reduce((a, s) => {
+    const f = forecast(s.id)[i];
+    a.ca += f.ca; a.chg += f.chg; a.profit += f.profit;
+    return a;
+  }, { mois: i + 1, ca: 0, chg: 0, profit: 0 }));
+}
+
+function latePayments() {
+  const rows = [];
+  ALL.forEach(id => {
+    D[id].pay.forEach(p => {
+      if ((p.st === 'déclaré' || p.st === 'en attente') && +new Date(p.date) < +AUJ - 7 * J) {
+        rows.push({ ...p, salle: id });
+      }
+    });
+  });
+  return rows.sort((a, b) => a.date - b.date);
+}
+
+function expiringMembers() {
+  const rows = [];
+  ALL.forEach(id => D[id].mem.forEach(m => {
+    const st = statut(m);
+    if (st === 'bientôt' || st === 'expiré') rows.push(m);
+  }));
+  return rows.sort((a, b) => a.exp - b.exp);
+}
+
 function viewNet() {
   const k = net;
-  const obj = SALLES.reduce((a, s) => a + kp(s.id).objectif, 0);
-  const managersAct = MANAGERS.filter(m => m.statut === 'actif').length;
-  const twofa = MANAGERS.filter(m => m.twofa && m.statut === 'actif').length;
+  const revLeader = SALLES.slice().sort((a, b) => kp(b.id).rev - kp(a.id).rev)[0];
+  const actLeader = SALLES.slice().sort((a, b) => kp(b.id).act - kp(a.id).act)[0];
+  const revL = kp(revLeader.id), actL = kp(actLeader.id);
   const plans = [0, 1, 2].map(i => ({ label: PLANS[i].n, value: SALLES.reduce((a, s) => a + D[s.id].mem.filter(m => m.plan === i).length, 0), color: PLANS[i].c }));
+  const fc = forecastNet();
+  const late = latePayments();
+  const exp = expiringMembers();
   const rows = SALLES.map(s => {
     const x = kp(s.id);
     return '<tr class="c" onclick="go({view:\'salle\',salle:\'' + s.id + '\',tab:\'dash\'})">' +
       '<td data-l="Établissement"><span class="site-dot" style="background:' + s.color + '"></span><b>' + esc(s.nom) + '</b><small class="mut">' + esc(s.resp) + '</small></td>' +
       '<td data-l="Actifs">' + x.act + ' <small class="mut">/ ' + x.tot + '</small><span class="cell-bar"><i style="width:' + x.taux + '%"></i></span></td>' +
+      '<td data-l="CA du mois">' + fmt(x.rev) + '</td>' +
+      '<td data-l="Charges">' + fmt(x.chg) + '</td>' +
+      '<td data-l="Résultat">' + fmt(x.profit) + '<small class="' + (x.marge >= 0 ? 't-ok' : 't-ko') + '">' + x.marge + ' %</small></td>' +
+      '<td data-l="Impayés">' + (x.impayes ? '<span class="t-ko">' + fmt(x.impayes) + '</span>' : '<span class="t-ok">0</span>') + '</td>' +
+      '<td data-l="Renouvellements">' + x.renouv + '</td>' +
+      '<td data-l="Nouveaux">' + x.nouv + '</td>' +
       '<td data-l="Présences">' + x.pres + '</td>' +
-      '<td data-l="Revenus">' + fmt(x.rev) + '</td>' +
-      '<td data-l="Expirés">' + (x.exp ? '<span class="t-ko">' + x.exp + '</span>' : '<span class="t-ok">0</span>') + '</td>' +
       '<td data-l="Évolution"><span class="' + (x.evo >= 0 ? 'up' : 'down') + '">' + (x.evo >= 0 ? '+' : '') + String(x.evo).replace('.', ',') + ' %</span></td>' +
       '<td data-l="Ouvrir"><span class="rowlink">Ouvrir ' + ICON('arrow-right') + '</span></td></tr>';
   }).join('');
 
   return head('Vue générale du réseau',
-    'Tout le réseau sur un seul écran. <span class="pill inline"><span class="dot"></span>Démonstration interactive</span>',
-    '<button class="btn s" onclick="go({view:\'rap\'})">' + ICON('file-export') + 'Rapports</button><button class="btn p s" onclick="startPres()">' + ICON('play') + 'Visite guidée</button>') +
+    'Tout le réseau sur un seul écran : revenus, charges, résultat, impayés et objectifs. <span class="pill inline"><span class="dot"></span>Simulation</span>',
+    '<button class="btn s" onclick="go({view:\'fin\'})">' + ICON('scale-balanced') + 'Comptabilité</button><button class="btn p s" onclick="startPres()">' + ICON('play') + 'Visite guidée</button>') +
     '<section class="dir-banner">' +
       '<div class="dir-avatar" aria-hidden="true">DG<span class="dir-ring"></span></div>' +
       '<div class="dir-copy"><span class="dir-kicker">' + ICON('crown') + 'Espace direction · PDG</span>' +
-        '<h2 class="serif">Toute la plateforme, sous votre contrôle.</h2>' +
-        '<p>Vous pilotez les ' + SALLES.length + ' salles, les indicateurs consolidés et les accès de chaque gérant. La direction reste l’espace principal ; chaque salle garde son identité.</p></div>' +
+        '<h2 class="serif">Pilotez le réseau, pas des fichiers.</h2>' +
+        '<p>Le consolidé financier, les abonnements à risque et la performance des quatre salles sont visibles ici. Chaque chiffre est une hypothèse de démonstration, à confronter aux vrais chiffres Jumeaux Fitness.</p></div>' +
       '<div class="dir-facts">' +
-        '<span><b>' + managersAct + '</b><small>gérants & équipes actifs</small></span>' +
-        '<span><b>' + twofa + '/' + managersAct + '</b><small>comptes avec 2FA</small></span>' +
+        '<span><b>' + k.act + '</b><small>adhérents actifs</small></span>' +
+        '<span><b>' + k.marge + ' %</b><small>marge estimée</small></span>' +
         '<span><b>' + SALLES.length + '</b><small>salles supervisées</small></span>' +
       '</div>' +
       '<div class="dir-actions">' +
-        '<button class="btn p" onclick="go({view:\'team\'})">' + ICON('user-shield') + 'Gérer l’équipe & les accès</button>' +
-        '<button class="btn ghost" onclick="go({view:\'set\'})">' + ICON('shield-halved') + 'Sécurité</button>' +
+        '<button class="btn p" onclick="go({view:\'fin\'})">' + ICON('chart-line') + 'Ouvrir la finance</button>' +
+        '<button class="btn ghost" onclick="go({view:\'perf\'})">' + ICON('ranking-star') + 'Performance des salles</button>' +
       '</div>' +
     '</section>' +
     '<div class="grid g4">' +
-      kpi('Adhérents actifs', k.act + ' <small class="kpi-of">/ ' + k.tot + '</small>', '<span class="up">' + ICON('arrow-trend-up') + ' +' + Math.round(k.tot * .12) + ' ce mois</span>', { spark: spark(D.km.rev) }) +
-      kpi('Revenus du mois', fmt(k.rev), '<span class="' + (addv('rev')[11] >= addv('rev')[10] ? 'up' : 'down') + '">' + ICON('arrow-trend-up') + ' +12,4 % vs octobre</span>', { spark: spark(addv('rev')) }) +
-      kpi('Présences aujourd’hui', k.pres, '<span class="mut">' + Math.round(k.pres / k.act * 10) / 10 + ' passages / adhérent actif</span>') +
-      kpi('Taux de rétention', k.taux + ' %', '<span class="up">' + ICON('shield-heart') + ' ' + k.multi + ' accès multi-salles</span>') +
+      kpi('CA mensuel', fmt(k.rev), '<span class="' + (addv('rev')[11] >= addv('rev')[10] ? 'up' : 'down') + '">' + ICON('arrow-trend-up') + ' ' + (addv('rev')[11] >= addv('rev')[10] ? '+' : '') + Math.round((addv('rev')[11] / Math.max(1, addv('rev')[10]) - 1) * 100) + ' % vs mois dernier</span>', { spark: spark(addv('rev')) }) +
+      kpi('CA annualisé', fmt(k.rev * 12), '<span class="mut">projection sur 12 mois</span>') +
+      kpi('Résultat estimé', fmt(k.profit), '<span class="' + (k.marge >= 0 ? 'up' : 'down') + '">' + ICON('percent') + ' marge ' + k.marge + ' %</span>') +
+      kpi('Encaissé (30 j)', fmt(k.encaisse), '<span class="' + (k.recouvrement >= 85 ? 'up' : 'warn-t') + '">' + k.recouvrement + ' % de recouvrement</span>') +
     '</div>' +
+    '<section class="insight' + (revLeader.id === actLeader.id ? '' : ' insight-duo') + '">' +
+      '<span class="insight-ic">' + ICON('lightbulb') + '</span>' +
+      '<div class="insight-copy"><span class="eyebrow">Lecture du PDG</span>' +
+        (revLeader.id === actLeader.id
+          ? '<b>' + esc(revLeader.nom) + ' mène à la fois sur les revenus et sur le nombre d’actifs.</b>'
+          : '<b>' + esc(revLeader.nom) + ' génère le plus de revenus (' + fmt(revL.rev) + '), mais ' + esc(actLeader.nom) + ' compte le plus d’adhérents actifs (' + actL.act + ' contre ' + revL.act + ').</b>') +
+        '<p>Deux réalités différentes : le panier moyen et la capacité d’encaissement de ' + esc(revLeader.nom) + ' face au volume de ' + esc(actLeader.nom) + '. C’est exactement le type d’écart qu’un fichier Excel partagé ne montre pas.</p></div>' +
+      '<div class="insight-facts">' +
+        '<span><small>Panier moyen</small><b>' + fmt(revL.panier) + '</b></span>' +
+        '<span><small>Actifs</small><b>' + actL.act + '</b></span>' +
+        '<span><small>À traiter</small><b>' + (k.soon + k.exp) + '</b></span>' +
+      '</div>' +
+    '</section>' +
     '<div class="grid g2">' +
-      line(addv('rev').map(v => Math.round(v / 1e4) / 100), MOIS, 'Revenus du réseau — 12 mois', ' M FCFA', { total: fmt(k.rev) }) +
+      line(addv('rev').map(v => Math.round(v / 1e3)), MOIS, 'Évolution des revenus du réseau', ' k FCFA', { total: fmt(k.rev) }) +
       bars(SALLES.map(s => Math.round(kp(s.id).rev / 1e3)), SALLES.map(s => s.nom), 'Revenus par établissement', ' k FCFA', { total: fmt(k.rev) }) +
     '</div>' +
+    '<div class="grid g2">' +
+      bars(SALLES.map(s => Math.round(kp(s.id).chg / 1e3)), SALLES.map(s => s.nom), 'Charges par établissement', ' k FCFA', { total: fmt(k.chg) }) +
+      bars(SALLES.map(s => Math.round(kp(s.id).profit / 1e3)), SALLES.map(s => s.nom), 'Résultat estimé par établissement', ' k FCFA', { total: fmt(k.profit) }) +
+    '</div>' +
+    '<div class="grid g2">' +
+      '<div class="card"><div class="chart-h"><div><h3>Objectifs d’encaissement</h3><p class="tiny mut">Encaissements réalisés sur l’objectif du mois, par salle.</p></div><span class="badge ' + (k.atteinte >= 90 ? 'b-ok' : 'b-warn') + '">' + k.atteinte + ' % réseau</span></div>' +
+        SALLES.map(s => { const x = kp(s.id); return '<div class="obj-row"><span class="site-dot" style="background:' + s.color + '"></span><b>' + esc(s.nom) + '</b><div class="progress"><i style="width:' + Math.min(100, x.atteinte) + '%;background:' + s.color + '"></i></div><small>' + fmt(x.encaisse) + ' / ' + fmt(x.objectif) + '</small><span class="badge ' + (x.atteinte >= 100 ? 'b-ok' : x.atteinte >= 80 ? 'b-warn' : 'b-ko') + '">' + x.atteinte + ' %</span></div>'; }).join('') +
+        '<p class="tiny mut" style="margin-top:8px">' + ICON('circle-info') + ' Les objectifs sont des hypothèses de démonstration, pas des engagements contractuels.</p></div>' +
+      '<div class="card"><div class="chart-h"><div><h3>Prévisions indicatives</h3><p class="tiny mut">Trois mois, à partir de la tendance actuelle.</p></div><span class="badge b-off">scénario</span></div>' +
+        '<div class="fc-row">' + fc.map((f, i) => '<div class="fc-month"><small>Mois +' + (i + 1) + '</small><b>' + fmt(f.ca) + '</b><span class="tiny mut">CA</span><em>Résultat ' + fmt(f.profit) + '</em></div>').join('') + '</div>' +
+        '<p class="tiny mut" style="margin-top:10px">' + ICON('triangle-exclamation') + ' Projection de simulation, non garantie. À recalibrer avec les charges et saisonnalités réelles.</p></div>' +
+    '</div>' +
+    '<div class="card table-card"><div class="chart-h"><div><h3>Comparaison complète des établissements</h3><p class="tiny mut">Cliquez une ligne pour ouvrir le back-office.</p></div><span class="badge b-ok">' + SALLES.length + ' salles</span></div>' +
+      '<div class="table-scroll"><table><thead><tr><th scope="col">Établissement</th><th scope="col">Actifs</th><th scope="col">CA</th><th scope="col">Charges</th><th scope="col">Résultat</th><th scope="col">Impayés</th><th scope="col">Renouv.</th><th scope="col">Nouveaux</th><th scope="col">Présences</th><th scope="col">Évolution</th><th scope="col"></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      '<div class="table-foot"><span class="mut tiny">Objectif d’encaissement du réseau : <b>' + fmt(k.objectif) + '</b> · Encaissé : <b>' + fmt(k.encaisse) + '</b></span><span class="badge ' + (k.atteinte >= 90 ? 'b-ok' : 'b-warn') + '">' + k.atteinte + ' % de l’objectif</span></div>' +
+    '</div>' +
+    '<div class="grid g2">' +
+      '<div class="card"><div class="chart-h"><div><h3>Impayés & retards</h3><p class="tiny mut">Déclaré = à vérifier · En attente = non réglé.</p></div><span class="badge ' + (late.length ? 'b-ko' : 'b-ok') + '">' + late.length + ' dossier(s)</span></div>' +
+        (late.length ? late.slice(0, 5).map(p => '<div class="act"><span class="act-ic warn">' + ICON('clock') + '</span><span><b>' + esc((findMembre(p.m) || {}).nom || p.m) + ' · ' + fmt(p.montant) + '</b><small>' + esc(siteName(p.salle)) + ' · ' + dstr(p.date) + ' · ' + payMeta(p.st).n + '</small></span><button class="btn s" onclick="openReconcile(\'' + p.ref + '\')">Traiter</button></div>').join('') : '<p class="tiny mut">Aucun retard de plus de 7 jours. La caisse est à jour.</p>') +
+        '<button class="btn s w" style="margin-top:10px" onclick="go({view:\'fin\',finTab:\'journal\'})">Ouvrir le journal ' + ICON('arrow-right') + '</button></div>' +
+      '<div class="card"><div class="chart-h"><div><h3>Échéances sous 7 jours</h3><p class="tiny mut">Relances J-7, J-3 et J-1.</p></div><span class="badge b-warn">' + k.soon + '</span></div>' +
+        (exp.length ? exp.slice(0, 5).map(m => '<div class="act"><span class="act-ic warn">' + ICON('user-clock') + '</span><span><b>' + esc(m.nom) + '</b><small>' + esc(siteName(m.home)) + ' · ' + PLANS[m.plan].n + ' · ' + dstr(m.exp) + '</small></span><span class="badge b-warn">' + (renewalAlert(m) || 'expiré') + '</span></div>').join('') : '<p class="tiny mut">Aucune échéance critique.</p>') +
+        '<button class="btn s w" style="margin-top:10px" onclick="go({view:\'salle\',salle:\'km\',tab:\'abo\'})">Traiter les abonnements ' + ICON('arrow-right') + '</button></div>' +
+    '</div>' +
     '<div class="grid g3">' +
-      bars([0, 1, 2, 3, 4, 5, 6].map(i => sum(id => D[id].freq[i])), JOURS, 'Fréquentation — 7 derniers jours', '', { total: fmtShort(k.pres) + ' auj.' }) +
       donut(plans, 'Répartition des formules', k.tot) +
-      liveCard() +
+      activity('pa') + liveCard() +
     '</div>' +
-    '<div class="card table-card"><div class="chart-h"><div><h3>Comparaison des établissements</h3><p class="tiny mut">Cliquez une ligne pour ouvrir le back-office.</p></div><span class="badge b-ok">' + SALLES.length + ' salles</span></div>' +
-      '<div class="table-scroll"><table><thead><tr><th scope="col">Établissement</th><th scope="col">Actifs</th><th scope="col">Présences</th><th scope="col">Revenus</th><th scope="col">Expirés</th><th scope="col">Évolution</th><th scope="col"></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
-      '<div class="table-foot"><span class="mut tiny">Objectif réseau du mois : <b>' + fmt(obj) + '</b> · Réalisé : <b>' + fmt(k.encaisse) + '</b></span><span class="badge ' + (k.encaisse >= obj ? 'b-ok' : 'b-warn') + '">' + Math.round(k.encaisse / obj * 100) + ' % de l’objectif</span></div>' +
+    '<p class="tiny mut center">Simulation locale : les montants, charges et prévisions sont fictifs et ne constituent pas des résultats garantis.</p>';
+}
+
+// ---------------------------------------------------------------- FINANCE
+const FIN_TABS = [['synthese', 'Synthèse', 'chart-pie'], ['journal', 'Journal des encaissements', 'receipt'], ['charges', 'Charges & dépenses', 'file-invoice-dollar'], ['caisse', 'Caisse & rapprochement', 'cash-register'], ['rapports', 'Rapports & exports', 'file-export']];
+
+function finPayRows(site) {
+  if (site === 'net') {
+    return ALL.flatMap(id => D[id].pay.map(p => Object.assign({}, p, { site: id }))).sort((a, b) => b.date - a.date);
+  }
+  return D[site].pay.map(p => Object.assign({}, p, { site }));
+}
+
+function finDepRows(site) {
+  if (site === 'net') {
+    return ALL.flatMap(id => D[id].dep.map(x => Object.assign({}, x, { site: id }))).sort((a, b) => b.date - a.date);
+  }
+  return D[site].dep.map(x => Object.assign({}, x, { site }));
+}
+
+function payMix(site) {
+  const since = +AUJ - 30 * J, colors = { 'Espèces': '#D9A441', Wave: '#2E75C9', 'Orange Money': '#F97316', 'Carte bancaire': '#8B5CF6' };
+  const rows = finPayRows(site).filter(p => p.st === 'confirmé' && +new Date(p.date) >= since);
+  return MOYENS.map(m => ({ label: m, value: rows.filter(p => p.moyen === m).reduce((a, p) => a + p.montant, 0), color: colors[m] || '#0E7A4B' })).filter(x => x.value > 0);
+}
+
+function chargeSplitNet() {
+  const rows = CHARGE_CATS.map(c => {
+    const amount = ALL.reduce((a, id) => a + D[id].dep.filter(x => x.catId === c.id).reduce((b, x) => b + x.amount, 0), 0);
+    return Object.assign({}, c, { amount });
+  }).filter(x => x.amount > 0);
+  return {
+    rows,
+    fixe: rows.filter(x => x.type === 'fixe').reduce((a, x) => a + x.amount, 0),
+    variable: rows.filter(x => x.type === 'variable').reduce((a, x) => a + x.amount, 0),
+    total: rows.reduce((a, x) => a + x.amount, 0)
+  };
+}
+
+function finSiteChips() {
+  const cur = S.finSite || 'net';
+  return [{ id: 'net', nom: 'Tout le réseau', color: '#0E7A4B' }].concat(SALLES).map(s =>
+    '<button class="chip' + (cur === s.id ? ' on' : '') + '" onclick="go({view:\'fin\',finSite:\'' + s.id + '\',finTab:S.finTab,depFilter:\'tous\'})">' +
+      (s.id === 'net' ? ICON('layer-group') : '<span class="site-dot" style="background:' + s.color + '"></span>') + esc(s.nom) +
+      '<span>' + (s.id === 'net' ? Math.round(net.rev / 1000) + 'k' : Math.round(kp(s.id).rev / 1000) + 'k') + '</span></button>').join('');
+}
+
+function finSummaryKpis(f, site) {
+  const isNet = site === 'net';
+  return '<div class="grid g4">' +
+    kpi('CA du mois', fmt(f.rev), '<span class="up">' + ICON('arrow-trend-up') + ' ' + (isNet ? net.act : kp(site).act) + ' actifs</span>') +
+    kpi('Charges du mois', fmt(f.chg), '<span class="mut">fixes + variables</span>') +
+    kpi('Résultat estimé', fmt(f.profit), '<span class="' + (f.marge >= 0 ? 'up' : 'down') + '">marge ' + f.marge + ' %</span>') +
+    kpi('Encaissé (30 j)', fmt(f.encaisse), '<span class="' + (f.recouvrement >= 85 ? 'up' : 'warn-t') + '">' + f.recouvrement + ' % recouvré</span>') +
     '</div>' +
-    '<div class="grid g2">' + activity('pa') + alerts() + '</div>' +
-    '<p class="tiny mut center">Version démonstration : les statistiques sont générées localement. La future version connectée les actualisera en temps réel.</p>';
+    '<div class="grid g4">' +
+    kpi('Déclaré à vérifier', fmt(f.declares), '<span class="warn-t">' + ICON('clock-rotate-left') + ' paiements déclarés</span>') +
+    kpi('En attente', fmt(f.attente), '<span class="warn-t">' + ICON('hourglass-half') + ' non réglés</span>') +
+    kpi('Impayés + retards', fmt(f.impayes), '<span class="' + (f.retard ? 'down' : 'up') + '">' + fmt(f.retard) + ' en retard</span>') +
+    kpi('Panier moyen', fmt(f.panier || Math.round(f.rev / Math.max(1, isNet ? net.act : kp(site).act))), '<span class="mut">par adhérent actif</span>') +
+    '</div>';
+}
+
+function finSynth(site) {
+  const isNet = site === 'net';
+  const f = isNet ? finNet() : finSite(site);
+  const split = isNet ? chargeSplitNet() : f.split;
+  const mix = payMix(site);
+  const series = isNet
+    ? { rev: addv('rev'), chg: addv('chg') }
+    : { rev: f.site.rev, chg: f.site.chg };
+  const fc = isNet ? forecastNet() : f.forecast;
+  const splitItems = split.rows.slice(0, 5).map((c, i) => ({ label: c.n, value: c.amount, color: ['#0E7A4B', '#2E75C9', '#D9A441', '#8B5CF6', '#EF4444'][i % 5] }));
+  return finSummaryKpis(f, site) +
+    '<div class="grid g2">' +
+      line(series.rev.map(v => Math.round(v / 1e3)), MOIS, 'Chiffre d’affaires — 12 mois', ' k FCFA', { total: fmt(f.rev) }) +
+      line(series.chg.map(v => Math.round(v / 1e3)), MOIS, 'Charges — 12 mois', ' k FCFA', { total: fmt(f.chg) }) +
+    '</div>' +
+    '<div class="grid g3">' +
+      donut(splitItems, 'Répartition des charges', fmtShort(split.total) + ' F') +
+      donut(mix, 'Encaissements (30 j)', fmtShort(f.encaisse) + ' F') +
+      '<div class="card"><div class="chart-h"><h3>Prévisions indicatives</h3><span class="badge b-off">scénario</span></div>' +
+        fc.map((x, i) => '<div class="fin-fc"><span><small>Mois +' + (i + 1) + '</small><b>' + fmt(x.ca) + '</b></span><span class="tiny mut">Charges ' + fmt(x.chg) + '</span><span class="badge ' + (x.profit >= 0 ? 'b-ok' : 'b-ko') + '">' + fmt(x.profit) + '</span></div>').join('') +
+        '<p class="tiny mut" style="margin-top:8px">' + ICON('triangle-exclamation') + ' Hypothèses de simulation — aucun gain garanti.</p></div>' +
+    '</div>' +
+    '<div class="grid g2">' +
+      '<div class="card"><div class="chart-h"><h3>Objectif & recouvrement</h3><span class="badge ' + (f.atteinte >= 90 ? 'b-ok' : 'b-warn') + '">' + f.atteinte + ' %</span></div>' +
+        '<div class="objectif"><b>' + fmt(f.encaisse) + '</b><span class="mut">encaissés sur ' + fmt(f.objectif) + '</span><div class="progress lg"><i style="width:' + Math.min(100, f.atteinte) + '%"></i></div></div>' +
+        '<div class="fin-states"><span><i class="st-dot ok"></i><b>' + fmt(f.encaisse) + '</b><small>Confirmé</small></span><span><i class="st-dot info"></i><b>' + fmt(f.declares) + '</b><small>Déclaré</small></span><span><i class="st-dot warn"></i><b>' + fmt(f.attente) + '</b><small>En attente</small></span></div>' +
+        '<p class="tiny mut">Un paiement déclaré n’est pas encore encaissé. Il doit être rapproché avant d’être compté comme recette confirmée.</p></div>' +
+      '<div class="card"><div class="chart-h"><h3>Dernières opérations</h3><button class="linkbtn" onclick="go({finTab:\'journal\'})">Tout voir</button></div>' +
+        finPayRows(site).slice(0, 5).map(p => '<div class="act"><span class="act-ic">' + ICON(MOYENS_ICON[p.moyen] || 'wallet') + '</span><span><b>' + fmt(p.montant) + ' · ' + esc((findMembre(p.m) || {}).nom || p.m) + '</b><small>' + (isNet ? siteName(p.site) + ' · ' : '') + dstr(p.date) + ' · ' + p.moyen + '</small></span>' + bdg(p.st) + '</div>').join('') +
+      '</div>' +
+    '</div>';
+}
+
+function finJournal(site) {
+  const st = S.payFilter || 'tous';
+  const all = finPayRows(site);
+  const list = all.filter(p => st === 'tous' || p.st === st);
+  const chips = ['tous', 'confirmé', 'déclaré', 'en attente', 'annulé'].map(x =>
+    '<button class="chip' + (st === x ? ' on' : '') + '" onclick="S.payFilter=\'' + x + '\';go({finTab:\'journal\'})">' +
+      (x === 'tous' ? 'Toutes' : payMeta(x).n) + '<span>' + (x === 'tous' ? all.length : all.filter(p => p.st === x).length) + '</span></button>').join('');
+  const rows = list.slice(0, 60).map(p => {
+    const m = findMembre(p.m) || { nom: p.m };
+    const actionable = p.st === 'déclaré' || p.st === 'en attente';
+    return '<tr><td data-l="Date">' + dstr(p.date) + '<small class="mut">' + hhmm(p.date) + '</small></td>' +
+      '<td data-l="Référence"><b class="mono">' + p.ref + '</b><small class="mut">' + esc(p.agent || '') + '</small></td>' +
+      '<td data-l="Adhérent">' + avatar(m.nom) + esc(m.nom) + (site === 'net' ? '<small class="mut">' + esc(siteName(p.site)) + '</small>' : '') + '</td>' +
+      '<td data-l="Montant"><b>' + fmt(p.montant) + '</b></td>' +
+      '<td data-l="Moyen">' + ICON(MOYENS_ICON[p.moyen] || 'wallet') + ' ' + esc(p.moyen) + '</td>' +
+      '<td data-l="Statut">' + bdg(p.st) + (actionable ? '<small class="warn-t tiny">à rapprocher</small>' : '') + '</td>' +
+      '<td><div class="row gap6 no-wrap">' + (actionable ? '<button class="btn s p" onclick="openReconcile(\'' + p.ref + '\')">Vérifier</button>' : '<button class="btn s" onclick="receiptRef(\'' + p.ref + '\')">Reçu</button>') + '</div></td></tr>';
+  }).join('');
+  return head('Journal des encaissements', 'Trois états distincts : <b>encaissé</b> (confirmé), <b>déclaré</b> (à vérifier) et <b>en attente</b> (non réglé).',
+    '<button class="btn s" onclick="exportFin(\'journal\')">' + ICON('file-excel') + 'Excel</button><button class="btn p s" onclick="newPaymentFin()">' + ICON('plus') + 'Encaisser</button>') +
+    '<div class="fin-legend"><span><i class="st-dot ok"></i><b>Confirmé</b> — argent encaissé et vérifié</span><span><i class="st-dot info"></i><b>Déclaré</b> — le client dit avoir payé, à contrôler</span><span><i class="st-dot warn"></i><b>En attente</b> — aucun règlement reçu</span></div>' +
+    '<div class="card table-card"><div class="table-tools"><div class="chips">' + chips + '</div><span class="tiny mut">' + list.length + ' opération(s)</span></div>' +
+      (rows ? '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Référence</th><th>Adhérent</th><th>Montant</th><th>Moyen</th><th>Statut</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' : emptyState('receipt', 'Aucune opération', 'Modifiez le filtre pour afficher d’autres paiements.')) +
+      '<p class="tiny mut" style="margin-top:10px">' + ICON('lock') + ' Aucune transaction réelle. Le rapprochement met simplement à jour les données fictives de la session.</p></div>';
+}
+
+function finCharges(site) {
+  const isNet = site === 'net';
+  const split = isNet ? chargeSplitNet() : chargeSplit(site);
+  const f = isNet ? finNet() : finSite(site);
+  const dep = finDepRows(site).filter(x => S.depFilter === 'tous' || x.cat === S.depFilter);
+  const rows = dep.slice(0, 70).map(x => '<tr><td data-l="Date">' + dstr(x.date) + '</td><td data-l="Libellé"><b>' + esc(x.label) + '</b><small class="mut">' + esc((CHARGE_META[x.catId] || {}).n || x.cat) + '</small></td>' +
+    (isNet ? '<td data-l="Salle">' + esc(siteName(x.site)) + '</td>' : '') +
+    '<td data-l="Type">' + bdg(x.cat === 'fixe' ? 'actif' : 'bientôt').replace(x.cat === 'fixe' ? 'Actif' : 'Expire bientôt', x.cat === 'fixe' ? 'Fixe' : 'Variable') + '</td>' +
+    '<td data-l="Moyen">' + esc(x.moyen) + '</td><td data-l="Montant"><b>' + fmt(x.amount) + '</b></td>' +
+    '<td><button class="btn s icon danger" aria-label="Supprimer" onclick="delExpense(\'' + x.site + '\',\'' + x.id + '\')">' + ICON('trash') + '</button></td></tr>').join('');
+  const cats = split.rows.map((c, i) => '<div class="cat-row"><span class="cat-ic">' + ICON(c.icon) + '</span><span><b>' + esc(c.n) + '</b><small class="mut">' + (c.type === 'fixe' ? 'Charge fixe' : 'Charge variable') + '</small></span><div class="progress"><i style="width:' + Math.round(c.amount / Math.max(1, split.total) * 100) + '%;background:' + ['#0E7A4B', '#2E75C9', '#D9A441', '#8B5CF6', '#EF4444', '#0F766E'][i % 6] + '"></i></div><b>' + fmt(c.amount) + '</b></div>').join('');
+  return head('Charges & dépenses', 'Les charges fixes et variables sont générées par salle. Chaque dépense est une écriture fictive modifiable.',
+    '<button class="btn s" onclick="exportFin(\'charges\')">' + ICON('file-excel') + 'Excel</button><button class="btn p s" onclick="openExpense()">' + ICON('plus') + 'Ajouter une dépense</button>') +
+    '<div class="grid g4">' +
+      kpi('Charges fixes', fmt(split.fixe), '<span class="mut">loyer, salaires, énergie…</span>') +
+      kpi('Charges variables', fmt(split.variable), '<span class="mut">marketing, commissions…</span>') +
+      kpi('Total du mois', fmt(split.total), '<span class="' + (split.total <= f.rev ? 'up' : 'down') + '">' + (f.rev ? Math.round(split.total / f.rev * 100) : 0) + ' % du CA</span>') +
+      kpi('Dépenses du jour', fmt(finDepRows(site).filter(x => sameDay(x.date, AUJ)).reduce((a, x) => a + x.amount, 0)), '<span class="mut">' + finDepRows(site).filter(x => sameDay(x.date, AUJ)).length + ' écriture(s)</span>') +
+    '</div>' +
+    '<div class="grid g2">' +
+      '<div class="card"><div class="chart-h"><div><h3>Structure des charges</h3><p class="tiny mut">Part de chaque catégorie dans le total.</p></div><span class="badge b-off">' + (isNet ? 'réseau' : esc(siteName(site))) + '</span></div>' + cats + '</div>' +
+      '<div class="card"><div class="chart-h"><h3>Dépenses enregistrées</h3><span class="badge b-warn">' + split.rows.length + ' catégories</span></div>' +
+        '<div class="fin-note">' + ICON('circle-info') + '<span>Les charges sont des hypothèses de démonstration. Elles peuvent être ajustées pour tester un scénario avec les vrais chiffres Jumeaux Fitness.</span></div>' +
+        '<button class="btn s w" style="margin-top:10px" onclick="openExpense()">' + ICON('plus') + 'Enregistrer une dépense</button></div>' +
+    '</div>' +
+    '<div class="card table-card"><div class="table-tools"><div class="chips">' +
+      [['tous', 'Toutes'], ['fixe', 'Fixes'], ['variable', 'Variables']].map(x => '<button class="chip' + (S.depFilter === x[0] ? ' on' : '') + '" onclick="S.depFilter=\'' + x[0] + '\';go({finTab:\'charges\'})">' + x[1] + '</button>').join('') +
+      '</div><span class="tiny mut">' + dep.length + ' écriture(s)</span></div>' +
+      (rows ? '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Libellé</th>' + (isNet ? '<th>Salle</th>' : '') + '<th>Type</th><th>Moyen</th><th>Montant</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' : emptyState('file-invoice', 'Aucune dépense', 'Ajoutez une dépense ou changez de filtre.')) +
+      '<p class="tiny mut" style="margin-top:10px">' + ICON('triangle-exclamation') + ' La suppression d’une dépense est locale à cette session et ne touche aucune comptabilité réelle.</p></div>';
+}
+
+function finCaisse(site) {
+  const isNet = site === 'net';
+  const ids = isNet ? ALL : [site];
+  const cards = ids.map(id => {
+    const d = D[id], cash = cashToday(id), decl = declaredToday(id), siteObj = SALLES.find(s => s.id === id);
+    const close = d.caisseClose;
+    return '<div class="card cash-card" style="--c:' + siteObj.color + '"><div class="chart-h"><div><h3>' + esc(siteObj.nom) + '</h3><p class="tiny mut">Caisse du ' + dayLabel(AUJ) + '</p></div><span class="badge ' + (close ? 'b-ok' : 'b-warn') + '">' + (close ? 'Clôturée' : 'Ouverte') + '</span></div>' +
+      '<div class="cash-total"><small>Encaissé aujourd’hui</small><b>' + fmt(cash.total) + '</b><span class="tiny mut">' + cash.list.length + ' paiement(s) confirmé(s)</span></div>' +
+      '<div class="cash-split">' + MOYENS.map(m => '<span><small>' + m + '</small><b>' + fmt(cash.by[m] || 0) + '</b></span>').join('') + '</div>' +
+      (decl.length ? '<div class="fin-note warn">' + ICON('clock-rotate-left') + '<span><b>' + decl.length + ' déclaration(s) à vérifier</b> · ' + fmt(decl.reduce((a, p) => a + p.montant, 0)) + '</span></div>' : '') +
+      (close ? '<p class="tiny mut">Clôture enregistrée · compté ' + fmt(close.compte) + ' · écart ' + fmt(close.ecart) + '</p>' : '') +
+      '<div class="row gap6" style="margin-top:10px"><button class="btn s p" onclick="openCaisse(\'' + id + '\')">' + ICON('cash-register') + 'Clôturer / compter</button><button class="btn s" onclick="go({view:\'fin\',finSite:\'' + id + '\',finTab:\'journal\'})">Journal</button></div></div>';
+  }).join('');
+  const focused = isNet ? null : D[site];
+  const todayRows = isNet ? [] : D[site].pay.filter(p => sameDay(p.date, AUJ)).map(p => {
+    const m = findMembre(p.m) || { nom: p.m };
+    return '<tr><td data-l="Heure">' + hhmm(p.date) + '</td><td data-l="Adhérent"><b>' + esc(m.nom) + '</b><small class="mut">' + p.ref + '</small></td><td data-l="Moyen">' + esc(p.moyen) + '</td><td data-l="Montant"><b>' + fmt(p.montant) + '</b></td><td data-l="Statut">' + bdg(p.st) + '</td><td>' + (p.st === 'déclaré' ? '<button class="btn s p" onclick="openReconcile(\'' + p.ref + '\')">Vérifier</button>' : (p.st === 'confirmé' ? '<button class="btn s" onclick="receiptRef(\'' + p.ref + '\')">Reçu</button>' : '')) + '</td></tr>';
+  }).join('');
+  return head('Caisse & rapprochement', 'Suivez l’argent réellement encaissé, les déclarations à vérifier et la clôture journalière.',
+    '<button class="btn s" onclick="exportFin(\'caisse\')">' + ICON('file-excel') + 'Excel</button><button class="btn p s" onclick="openFinReport()">' + ICON('file-pdf') + 'Rapport PDF</button>') +
+    '<div class="grid ' + (isNet ? 'g4' : 'g2') + '">' + cards + '</div>' +
+    (focused ? '<div class="grid g2">' +
+      '<div class="card"><div class="chart-h"><div><h3>Opérations du jour</h3><p class="tiny mut">' + esc(focused.nom) + ' · ' + dayLabel(AUJ) + '</p></div><span class="badge b-ok">' + focused.pay.filter(p => sameDay(p.date, AUJ)).length + '</span></div>' +
+        (todayRows ? '<div class="table-scroll"><table><thead><tr><th>Heure</th><th>Adhérent</th><th>Moyen</th><th>Montant</th><th>Statut</th><th></th></tr></thead><tbody>' + todayRows + '</tbody></table></div>' : emptyState('cash-register', 'Aucune opération aujourd’hui', 'Les encaissements du jour apparaîtront ici.')) + '</div>' +
+      '<div class="card"><div class="chart-h"><h3>Contrôle de caisse</h3><span class="badge b-off">simulation</span></div>' +
+        '<div class="cash-recon"><div><small>Fond de caisse</small><b>' + fmt(focused.caisseFond) + '</b></div><div><small>Encaissements confirmés</small><b>' + fmt(cashToday(site).total) + '</b></div><div><small>Théorique en caisse</small><b>' + fmt(focused.caisseFond + cashToday(site).total) + '</b></div></div>' +
+        '<div class="fin-note">' + ICON('shield-halved') + '<span>La clôture compare le montant compté au théorique. Un écart est enregistré dans le journal, sans impact réel.</span></div>' +
+        '<button class="btn p w" style="margin-top:10px" onclick="openCaisse(\'' + site + '\')">' + ICON('cash-register') + 'Compter et clôturer</button></div>' +
+    '</div>' : '') +
+    '<div class="fin-note">' + ICON('circle-info') + '<span>Rapprochement : un paiement <b>déclaré</b> devient <b>encaissé</b> après vérification. Un paiement <b>en attente</b> peut être confirmé ou annulé. Les montants sont fictifs.</span></div>';
+}
+
+function finRapports(site) {
+  const isNet = site === 'net';
+  const f = isNet ? finNet() : finSite(site);
+  const monthly = MOIS.map((m, i) => {
+    const rev = isNet ? addv('rev')[i] : D[site].rev[i];
+    const chg = isNet ? addv('chg')[i] : D[site].chg[i];
+    const profit = rev - chg;
+    return { m, rev, chg, profit, marge: rev ? Math.round(profit / rev * 100) : 0 };
+  });
+  const siteRows = SALLES.map(s => {
+    const x = finSite(s.id);
+    return '<tr><td data-l="Salle"><span class="site-dot" style="background:' + s.color + '"></span><b>' + esc(s.nom) + '</b></td><td data-l="CA">' + fmt(x.rev) + '</td><td data-l="Charges">' + fmt(x.chg) + '</td><td data-l="Résultat"><b class="' + (x.profit >= 0 ? 't-ok' : 't-ko') + '">' + fmt(x.profit) + '</b><small class="mut">' + x.marge + ' %</small></td><td data-l="Encaissé">' + fmt(x.encaisse) + '</td><td data-l="Impayés">' + fmt(x.impayes) + '</td><td data-l="Recouvrement">' + x.recouvrement + ' %</td></tr>';
+  }).join('');
+  return head('Rapports & exports', 'Des états financiers prêts à imprimer ou à ouvrir dans Excel. Tous les montants restent des hypothèses locales.',
+    '<button class="btn s" onclick="exportFin(\'synthese\')">' + ICON('file-excel') + 'Excel synthèse</button><button class="btn p s" onclick="openFinReport()">' + ICON('file-pdf') + 'PDF / impression</button>') +
+    '<div class="grid g4">' +
+      kpi('CA annualisé', fmt(f.rev * 12), '<span class="mut">projection linéaire</span>') +
+      kpi('Charges annualisées', fmt(f.chg * 12), '<span class="mut">projection linéaire</span>') +
+      kpi('Résultat annualisé', fmt(f.profit * 12), '<span class="' + (f.profit >= 0 ? 'up' : 'down') + '">simulation</span>') +
+      kpi('Marge moyenne', f.marge + ' %', '<span class="mut">sur le mois en cours</span>') +
+    '</div>' +
+    '<div class="card table-card"><div class="chart-h"><h3>Rapport par établissement</h3><span class="badge b-off">FCFA</span></div>' +
+      '<div class="table-scroll"><table><thead><tr><th>Salle</th><th>CA</th><th>Charges</th><th>Résultat</th><th>Encaissé</th><th>Impayés</th><th>Recouvrement</th></tr></thead><tbody>' + siteRows + '</tbody></table></div></div>' +
+    '<div class="card table-card"><div class="chart-h"><div><h3>Synthèse mensuelle — 12 mois</h3><p class="tiny mut">CA, charges et résultat reconstitués.</p></div><button class="btn s" onclick="exportFin(\'mensuel\')">' + ICON('file-excel') + 'Excel</button></div>' +
+      '<div class="table-scroll"><table><thead><tr><th>Mois</th><th>CA</th><th>Charges</th><th>Résultat</th><th>Marge</th></tr></thead><tbody>' +
+        monthly.map(x => '<tr><td data-l="Mois"><b>' + x.m + '</b></td><td data-l="CA">' + fmt(x.rev) + '</td><td data-l="Charges">' + fmt(x.chg) + '</td><td data-l="Résultat" class="' + (x.profit >= 0 ? 't-ok' : 't-ko') + '">' + fmt(x.profit) + '</td><td data-l="Marge">' + x.marge + ' %</td></tr>').join('') +
+      '</tbody></table></div></div>' +
+    '<div class="grid g2"><div class="card"><h3>Exports disponibles</h3><p class="mut tiny">Fichiers générés localement. Le format Excel est un tableau HTML compatible .xls, sans macro.</p>' +
+      '<div class="export-list">' +
+        '<button onclick="exportFin(\'synthese\')">' + ICON('chart-pie') + '<span><b>Synthèse réseau</b><small>CA, charges, résultat par salle</small></span>' + ICON('download') + '</button>' +
+        '<button onclick="exportFin(\'journal\')">' + ICON('receipt') + '<span><b>Journal des encaissements</b><small>Statuts, moyens et références</small></span>' + ICON('download') + '</button>' +
+        '<button onclick="exportFin(\'charges\')">' + ICON('file-invoice-dollar') + '<span><b>Charges & dépenses</b><small>Fixes, variables et catégories</small></span>' + ICON('download') + '</button>' +
+        '<button onclick="exportFin(\'caisse\')">' + ICON('cash-register') + '<span><b>Caisse du jour</b><small>Encaissements et déclarations</small></span>' + ICON('download') + '</button>' +
+      '</div></div>' +
+      '<div class="card"><h3>À valider avec vos vrais chiffres</h3><ul class="checklist">' +
+        ['Remplacer les hypothèses de charges par les factures réelles', 'Vérifier les tarifs et la répartition des formules', 'Comparer les encaissements Wave / Orange Money / espèces', 'Valider les objectifs mensuels avec la direction', 'Confronter les prévisions à la saisonnalité réelle'].map(x => '<li>' + ICON('circle-check') + x + '</li>').join('') +
+      '</ul><p class="tiny mut">' + ICON('triangle-exclamation') + ' Aucun gain financier n’est garanti. Les prévisions servent à discuter des hypothèses, pas à promettre un résultat.</p></div></div>';
+}
+
+function viewFin() {
+  const site = S.finSite || 'net';
+  const tab = S.finTab || 'synthese';
+  const label = site === 'net' ? 'Tout le réseau' : siteName(site);
+  const body = tab === 'journal' ? finJournal(site) :
+    tab === 'charges' ? finCharges(site) :
+    tab === 'caisse' ? finCaisse(site) :
+    tab === 'rapports' ? finRapports(site) : finSynth(site);
+  const tabs = FIN_TABS.map(t => '<button class="tab' + (tab === t[0] ? ' on' : '') + '" onclick="go({finTab:\'' + t[0] + '\'})">' + ICON(t[2]) + t[1] + '</button>').join('');
+  return head('Finance & comptabilité', 'Journal, charges, caisse et rapports pour <b>' + esc(label) + '</b>. Chaque montant est une simulation locale.',
+    '<button class="btn s" onclick="exportFin(\'synthese\')">' + ICON('file-excel') + 'Excel</button><button class="btn s" onclick="openFinReport()">' + ICON('file-pdf') + 'PDF</button><button class="btn p s" onclick="openExpense()">' + ICON('plus') + 'Dépense</button>') +
+    '<div class="card table-tools fin-toolbar"><div class="chips">' + finSiteChips() + '</div><span class="tiny mut">' + ICON('flask') + ' Données fictives · session locale</span></div>' +
+    '<div class="tabs fin-tabs" role="tablist">' + tabs + '</div>' + body;
+}
+
+// ---------------------------------------------------------------- PERFORMANCE
+function viewPerf() {
+  const p = perfNet();
+  const rankRev = p.rows.slice().sort((a, b) => b.rev - a.rev);
+  const rankAct = p.rows.slice().sort((a, b) => b.act - a.act);
+  const revLeader = rankRev[0], actLeader = rankAct[0];
+  const cards = p.rows.map((x, i) => {
+    const s = SALLES.find(y => y.id === x.id);
+    const rank = rankRev.findIndex(y => y.id === x.id) + 1;
+    return '<article class="card perf-card" style="--c:' + s.color + '"><div class="chart-h"><div><h3>' + esc(x.nom) + '</h3><p class="tiny mut">' + esc(s.resp) + '</p></div><span class="badge b-off">#' + rank + ' CA</span></div>' +
+      '<div class="perf-nums"><span><small>Actifs</small><b>' + x.act + '</b></span><span><small>CA</small><b>' + fmtShort(x.rev) + '</b></span><span><small>Résultat</small><b>' + fmtShort(x.profit) + '</b></span><span><small>Marge</small><b>' + x.marge + ' %</b></span></div>' +
+      '<div class="perf-mini">' + [['Renouvellements', x.renouv], ['Nouveaux', x.nouv], ['Présences', x.pres], ['Impayés', x.impayes]].map(z => '<span><small>' + z[0] + '</small><b>' + (z[0] === 'Impayés' ? fmt(z[1]) : z[1]) + '</b></span>').join('') + '</div>' +
+      '<div class="progress"><i style="width:' + x.taux + '%;background:' + s.color + '"></i></div><span class="tiny mut">' + x.taux + ' % d’actifs · panier ' + fmt(x.panier) + '</span>' +
+      '<button class="btn s w" style="margin-top:10px" onclick="go({view:\'fin\',finSite:\'' + x.id + '\',finTab:\'synthese\'})">Voir la finance ' + ICON('arrow-right') + '</button></article>';
+  }).join('');
+  const rows = rankRev.map((x, i) => '<tr><td data-l="Rang"><b class="rank-n">' + (i + 1) + '</b></td><td data-l="Salle"><span class="site-dot" style="background:' + (SALLES.find(s => s.id === x.id) || {}).color + '"></span><b>' + esc(x.nom) + '</b></td>' +
+    '<td data-l="Actifs">' + x.act + '</td><td data-l="CA">' + fmt(x.rev) + '</td><td data-l="Résultat">' + fmt(x.profit) + '<small class="mut">' + x.marge + ' %</small></td><td data-l="Renouvellements">' + x.renouv + '</td><td data-l="Nouveaux">' + x.nouv + '</td><td data-l="Présences">' + x.pres + '</td><td data-l="Impayés">' + fmt(x.impayes) + '</td><td data-l="Panier">' + fmt(x.panier) + '</td></tr>').join('');
+  return head('Performance des salles', 'Comparez les quatre établissements sur une seule page : revenus, actifs, renouvellements, nouveaux, présences et impayés.',
+    '<button class="btn s" onclick="go({view:\'fin\'})">' + ICON('scale-balanced') + 'Finance</button><button class="btn p s" onclick="startPres()">' + ICON('play') + 'Présenter</button>') +
+    '<section class="insight"><span class="insight-ic">' + ICON('ranking-star') + '</span><div class="insight-copy"><span class="eyebrow">Comparaison immédiate</span>' +
+      '<b>' + esc(revLeader.nom) + ' mène sur le CA (' + fmt(revLeader.rev) + '), ' + esc(actLeader.nom) + ' mène sur les actifs (' + actLeader.act + ').</b>' +
+      '<p>Un même réseau peut avoir plusieurs logiques de performance. Cette vue aide à décider où renforcer la vente, où stabiliser la rétention et où accélérer le recouvrement.</p></div>' +
+      '<div class="insight-facts"><span><small>CA réseau</small><b>' + fmt(p.rev) + '</b></span><span><small>Actifs</small><b>' + p.act + '</b></span><span><small>Impayés</small><b>' + fmt(p.impayes) + '</b></span></div></section>' +
+    '<div class="grid g4">' +
+      kpi('Actifs consolidés', p.act, '<span class="mut">' + net.tot + ' fiches au total</span>') +
+      kpi('CA mensuel', fmt(p.rev), '<span class="up">' + ICON('arrow-trend-up') + ' réseau</span>') +
+      kpi('Renouvellements (30 j)', p.renouv, '<span class="up">' + ICON('arrows-rotate') + ' ' + p.nouv + ' nouveaux</span>') +
+      kpi('Impayés', fmt(p.impayes), '<span class="' + (p.impayes ? 'warn-t' : 'up') + '">à rapprocher en caisse</span>') +
+    '</div>' +
+    '<div class="grid g4">' + cards + '</div>' +
+    '<div class="grid g2">' +
+      bars(p.rows.map(x => Math.round(x.rev / 1e3)), p.rows.map(x => x.nom), 'CA par salle', ' k FCFA', { total: fmt(p.rev) }) +
+      bars(p.rows.map(x => x.act), p.rows.map(x => x.nom), 'Adhérents actifs', '', { total: p.act + ' actifs' }) +
+    '</div>' +
+    '<div class="grid g2">' +
+      bars(p.rows.map(x => x.renouv), p.rows.map(x => x.nom), 'Renouvellements — 30 jours', '', { total: p.renouv }) +
+      bars(p.rows.map(x => x.nouv), p.rows.map(x => x.nom), 'Nouveaux adhérents — 30 jours', '', { total: p.nouv }) +
+    '</div>' +
+    '<div class="card table-card"><div class="chart-h"><div><h3>Tableau de performance</h3><p class="tiny mut">Classé par chiffre d’affaires. Les montants sont fictifs.</p></div><span class="badge b-ok">4 salles</span></div>' +
+      '<div class="table-scroll"><table><thead><tr><th>Rang</th><th>Salle</th><th>Actifs</th><th>CA</th><th>Résultat</th><th>Renouv.</th><th>Nouveaux</th><th>Présences</th><th>Impayés</th><th>Panier</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
+    '<div class="grid g2">' + activity('km') +
+      '<div class="card"><div class="chart-h"><h3>Ce que cette vue permet de décider</h3><span class="badge b-off">lecture</span></div><ul class="checklist">' +
+      ['Quelle salle génère le plus de revenus, et pourquoi', 'Où la base d’adhérents est la plus large', 'Quelle salle renouvelle le mieux', 'Où les nouveaux manquent malgré un bon CA', 'Quel établissement concentre les impayés', 'Quel panier moyen mérite une offre premium'].map(x => '<li>' + ICON('circle-check') + x + '</li>').join('') +
+      '</ul><p class="tiny mut">' + ICON('triangle-exclamation') + ' Les écarts sont des hypothèses de démonstration, à confronter aux données réelles avant toute décision.</p></div>' +
+    '</div>';
 }
 
 function liveCard() {
@@ -277,51 +629,111 @@ function salleMem(id, d) {
 }
 
 function salleAbo(id, d, k) {
+  const sc = subCounts(id);
+  const view = S.aboView || 'traiter';
   const cards = PLANS.map((p, i) => {
     const n = d.mem.filter(m => m.plan === i).length;
     return '<div class="card plan-card' + (p.pop ? ' pop' : '') + '" style="--c:' + p.c + '">' + (p.pop ? '<span class="plan-flag">Le plus choisi</span>' : '') +
       '<span class="plan-name">' + p.n + '</span><b class="plan-price">' + fmt(p.p) + '</b><span class="tiny mut">' + p.j + ' jours · ' + p.d + '</span>' +
       '<div class="plan-bar"><i style="width:' + Math.round(n / d.mem.length * 100) + '%"></i></div><span class="tiny mut"><b>' + n + '</b> adhérents · ' + Math.round(n / d.mem.length * 100) + ' %</span></div>';
   }).join('');
-  const rows = d.mem.filter(m => ['bientôt', 'expiré'].includes(statut(m))).sort((a, b) => a.exp - b.exp).slice(0, 10).map(m =>
-    '<tr><td data-l="Adhérent">' + avatar(m.nom) + '<b>' + esc(m.nom) + '</b><small class="mut">' + m.id + '</small></td>' +
-    '<td data-l="Formule">' + PLANS[m.plan].n + '</td><td data-l="Échéance">' + dstr(m.exp) + '</td>' +
-    '<td data-l="Statut">' + bdg(statut(m)) + '</td>' +
-    '<td><div class="row gap6 no-wrap"><button class="btn s p" onclick="renew(\'' + m.id + '\')">' + ICON('rotate') + 'Renouveler</button><button class="btn s" onclick="fiche(\'' + m.id + '\')">Fiche</button></div></td></tr>').join('');
-  return head('Abonnements', k.soon + ' échéances sous 7 jours · ' + k.exp + ' expirés · ' + k.multi + ' accès multi-salles',
-    '<button class="btn s" onclick="go({tab:\'pay\'})">' + ICON('money-bill-wave') + 'Voir la caisse</button>') +
+
+  const due7 = d.mem.filter(m => statut(m) === 'bientôt' && joursRestants(m) >= 4);
+  const due3 = d.mem.filter(m => statut(m) === 'bientôt' && joursRestants(m) >= 2 && joursRestants(m) <= 3);
+  const due1 = d.mem.filter(m => statut(m) === 'bientôt' && joursRestants(m) <= 1);
+  const demands = d.mem.filter(m => m.demande && m.demande.statut === 'à traiter');
+  const filters = [['traiter', 'À traiter', sc.bientot + sc.expires], ['expirés', 'Expirés', sc.expires], ['inactifs', 'Inactifs', sc.inactifs], ['demandes', 'Demandes', demands.length], ['tous', 'Tous', d.mem.length]];
+  let list;
+  if (view === 'traiter') list = d.mem.filter(m => ['bientôt', 'expiré'].includes(statut(m))).sort((a, b) => a.exp - b.exp);
+  else if (view === 'expirés') list = d.mem.filter(m => statut(m) === 'expiré').sort((a, b) => a.exp - b.exp);
+  else if (view === 'inactifs') list = d.mem.filter(inactif).sort((a, b) => lastVisit(a) - lastVisit(b));
+  else if (view === 'demandes') list = demands.sort((a, b) => a.demande.at - b.demande.at);
+  else list = d.mem.slice().sort((a, b) => a.exp - b.exp);
+
+  const rows = list.slice(0, 40).map(m => {
+    const st = statut(m), jr = joursRestants(m), alert = renewalAlert(m);
+    const auto = '<button class="badge ' + (m.autoRenew ? 'b-ok' : 'b-off') + '" title="Activer ou désactiver le renouvellement automatique" onclick="toggleAutoRenew(\'' + m.id + '\')">' + ICON('rotate') + (m.autoRenew ? 'Auto' : 'Manuel') + '</button>';
+    const demand = m.demande && m.demande.statut === 'à traiter'
+      ? '<div class="sub-demand"><b>' + (m.demande.type === 'changement' ? 'Changement → ' + PLANS[m.demande.plan].n : 'Renouvellement demandé') + '</b><small>Demandé le ' + dstr(m.demande.at) + '</small>' +
+        '<span class="row gap6"><button class="btn s p" onclick="treatDemand(\'' + m.id + '\',true)">Accepter</button><button class="btn s danger" onclick="treatDemand(\'' + m.id + '\',false)">Refuser</button></span></div>'
+      : '';
+    return '<tr' + (m.demande && m.demande.statut === 'à traiter' ? ' class="row-alert"' : '') + '><td data-l="Adhérent">' + avatar(m.nom) + '<b>' + esc(m.nom) + '</b><small class="mut">' + m.id + ' · ' + (inactif(m) ? 'inactif ' + Math.floor((AUJ - lastVisit(m)) / J) + ' j' : 'vu le ' + dstr(lastVisit(m))) + '</small>' + demand + '</td>' +
+      '<td data-l="Formule">' + PLANS[m.plan].n + '<small class="mut">' + fmt(PLANS[m.plan].p) + '</small></td>' +
+      '<td data-l="Début">' + dstr(m.debut || m.inscription) + '</td>' +
+      '<td data-l="Échéance">' + dstr(m.exp) + '<small class="' + (st === 'expiré' ? 't-ko' : st === 'bientôt' ? 'warn-t' : 'mut') + '">' + (jr >= 0 ? 'J-' + jr : 'expiré depuis ' + Math.abs(jr) + ' j') + '</small></td>' +
+      '<td data-l="Alerte">' + (alert ? '<span class="badge ' + (alert === 'expiré' ? 'b-ko' : 'b-warn') + '">' + alert + '</span>' : '<span class="badge b-ok">OK</span>') + '<small class="mut">' + bdg(st) + '</small></td>' +
+      '<td data-l="Auto">' + auto + '</td>' +
+      '<td data-l="Actions"><div class="row gap6 no-wrap">' +
+        '<button class="btn s p" onclick="renew(\'' + m.id + '\')">' + ICON('rotate') + 'Renouveler</button>' +
+        '<button class="btn s icon" title="Changer de formule" aria-label="Changer de formule" onclick="openPlan(\'' + m.id + '\')">' + ICON('shuffle') + '</button>' +
+        '<button class="btn s icon" title="Historique" aria-label="Historique" onclick="openHistory(\'' + m.id + '\')">' + ICON('clock-rotate-left') + '</button>' +
+        '<button class="btn s icon ' + (m.susp ? 'p' : 'danger') + '" title="' + (m.susp ? 'Réactiver' : 'Suspendre temporairement') + '" aria-label="' + (m.susp ? 'Réactiver' : 'Suspendre') + '" onclick="toggleSusp(\'' + m.id + '\')">' + ICON(m.susp ? 'play' : 'pause') + '</button>' +
+        '<button class="btn s icon" title="Fiche" aria-label="Fiche" onclick="fiche(\'' + m.id + '\')">' + ICON('id-card') + '</button>' +
+      '</div></td></tr>';
+  }).join('');
+
+  const history = d.mem.flatMap(m => (m.renouv || []).map(r => ({ m, r }))).filter(x => +new Date(x.r.date) >= +AUJ - 120 * J).sort((a, b) => b.r.date - a.r.date).slice(0, 8);
+  const historyRows = history.map(x => '<div class="act"><span class="act-ic ' + (x.r.type === 'changement' ? '' : 'ok') + '">' + ICON(x.r.type === 'changement' ? 'shuffle' : 'rotate') + '</span><span><b>' + esc(x.m.nom) + ' · ' + (x.r.type === 'changement' ? 'changement de formule' : 'renouvellement') + '</b><small>' + dstr(x.r.date) + ' · ' + PLANS[x.r.plan].n + (x.r.montant ? ' · ' + fmt(x.r.montant) : '') + ' · ' + esc(x.r.moyen || '—') + '</small></span><span class="badge b-off">' + (x.r.type === 'changement' ? 'formule' : 'auto') + '</span></div>').join('');
+
+  return head('Abonnements', sc.actifs + ' actifs · ' + (sc.bientot + sc.expires) + ' à risque · ' + sc.demandes + ' demande(s) · ' + sc.inactifs + ' inactif(s)',
+    '<button class="btn s" onclick="go({tab:\'pay\'})">' + ICON('money-bill-wave') + 'Voir la caisse</button><button class="btn p s" onclick="go({tab:\'mem\',filter:\'bientôt\'})">' + ICON('user-clock') + 'Traiter les échéances</button>') +
+    '<div class="sub-alerts">' +
+      '<div class="sub-alert"><span class="sub-alert-n">' + due7.length + '</span><span><b>Alerte J-7</b><small>Renouvellement à préparer</small></span>' + ICON('calendar-day') + '</div>' +
+      '<div class="sub-alert warn"><span class="sub-alert-n">' + due3.length + '</span><span><b>Alerte J-3</b><small>Relance à envoyer</small></span>' + ICON('bell') + '</div>' +
+      '<div class="sub-alert ko"><span class="sub-alert-n">' + due1.length + '</span><span><b>Alerte J-1</b><small>Dernier rappel</small></span>' + ICON('triangle-exclamation') + '</div>' +
+      '<div class="sub-alert info"><span class="sub-alert-n">' + sc.auto + '</span><span><b>Auto-renouvellement</b><small>sur ' + d.mem.length + ' fiches</small></span>' + ICON('arrows-rotate') + '</div>' +
+    '</div>' +
     '<div class="grid g3">' + cards + '</div>' +
-    '<div class="card table-card"><div class="chart-h"><div><h3>Renouvellements à traiter</h3><p class="tiny mut">Un renouvellement met à jour l’échéance et crée un reçu.</p></div><span class="badge b-warn">' + (k.soon + k.exp) + ' dossiers</span></div>' +
-      (rows ? '<div class="table-scroll"><table><thead><tr><th>Adhérent</th><th>Formule</th><th>Échéance</th><th>Statut</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' : emptyState('circle-check', 'Aucun renouvellement en attente', 'Toutes les échéances sont à jour.')) +
-      '<p class="tiny mut" style="margin-top:10px">' + ICON('circle-info') + ' Le renouvellement est simulé : aucun paiement réel n’est effectué.</p></div>';
+    '<div class="grid g4">' +
+      kpi('Actifs', sc.actifs, '<span class="up">' + ICON('circle-check') + ' accès immédiat</span>') +
+      kpi('À risque', sc.bientot + sc.expires, '<span class="warn-t">J-7 et expirés</span>') +
+      kpi('Expirés', sc.expires, '<span class="' + (sc.expires ? 'down' : 'up') + '">à reconquérir</span>') +
+      kpi('Inactifs', sc.inactifs, '<span class="warn-t">' + ICON('user-clock') + ' > 21 jours sans visite</span>') +
+    '</div>' +
+    '<div class="card table-card"><div class="table-tools"><div class="chips">' +
+      filters.map(f => '<button class="chip' + (view === f[0] ? ' on' : '') + '" onclick="S.aboView=\'' + f[0] + '\';go({tab:\'abo\'})">' + f[1] + '<span>' + f[2] + '</span></button>').join('') +
+      '</div><span class="tiny mut">' + list.length + ' dossier(s) · renouvellement simulé</span></div>' +
+      (rows ? '<div class="table-scroll"><table><thead><tr><th>Adhérent</th><th>Formule</th><th>Début</th><th>Échéance</th><th>Alerte</th><th>Auto</th><th>Actions</th></tr></thead><tbody>' + rows + '</tbody></table></div>' : emptyState('circle-check', 'Aucun dossier dans ce filtre', 'Toutes les échéances sont peut-être déjà traitées.')) +
+      '<p class="tiny mut" style="margin-top:10px">' + ICON('circle-info') + ' Un renouvellement met à jour l’échéance, l’historique et crée un reçu fictif. Aucun paiement réel n’est effectué.</p></div>' +
+    '<div class="grid g2">' +
+      '<div class="card"><div class="chart-h"><div><h3>Demandes à traiter</h3><p class="tiny mut">Demandes envoyées depuis l’espace adhérent.</p></div><span class="badge ' + (demands.length ? 'b-warn' : 'b-ok') + '">' + demands.length + '</span></div>' +
+        (demands.length ? demands.slice(0, 5).map(m => '<div class="act"><span class="act-ic warn">' + ICON(m.demande.type === 'changement' ? 'shuffle' : 'rotate') + '</span><span><b>' + esc(m.nom) + '</b><small>' + (m.demande.type === 'changement' ? 'Changement vers ' + PLANS[m.demande.plan].n : 'Renouvellement ' + PLANS[m.demande.plan].n) + ' · ' + dstr(m.demande.at) + '</small></span><span class="row gap6"><button class="btn s p" onclick="treatDemand(\'' + m.id + '\',true)">Accepter</button><button class="btn s danger" onclick="treatDemand(\'' + m.id + '\',false)">Refuser</button></span></div>').join('') : '<p class="tiny mut">Aucune demande en attente. Les demandes de l’espace adhérent apparaîtront ici.</p>') +
+      '</div>' +
+      '<div class="card"><div class="chart-h"><div><h3>Historique des renouvellements</h3><p class="tiny mut">120 derniers jours · auto ou manuel.</p></div><span class="badge b-off">' + history.length + '</span></div>' +
+        (historyRows || '<p class="tiny mut">Aucun renouvellement enregistré sur la période.</p>') +
+      '</div>' +
+    '</div>';
 }
 
 function sallePay(id, d, k) {
   const st = S.payFilter || 'tous';
   const list = d.pay.filter(p => st === 'tous' || p.st === st);
-  const total = d.pay.filter(p => p.st === 'confirmé').reduce((a, p) => a + p.montant, 0);
-  const pending = d.pay.filter(p => p.st === 'en attente').reduce((a, p) => a + p.montant, 0);
-  const chips = ['tous', 'confirmé', 'en attente', 'annulé'].map(f =>
+  const c30 = payIn(id, 30);
+  const total = c30.filter(p => p.st === 'confirmé').reduce((a, p) => a + p.montant, 0);
+  const declares = c30.filter(p => p.st === 'déclaré').reduce((a, p) => a + p.montant, 0);
+  const pending = c30.filter(p => p.st === 'en attente').reduce((a, p) => a + p.montant, 0);
+  const chips = ['tous', 'confirmé', 'déclaré', 'en attente', 'annulé'].map(f =>
     '<button class="chip' + (st === f ? ' on' : '') + '" onclick="S.payFilter=\'' + f + '\';go({tab:\'pay\'})">' +
-    (f === 'tous' ? 'Tous' : STATUT_META[f][1]) + '<span>' + (f === 'tous' ? d.pay.length : d.pay.filter(p => p.st === f).length) + '</span></button>').join('');
-  const rows = list.slice(0, 20).map(p => {
-    const m = findMembre(p.m);
-    return '<tr><td data-l="Référence"><b class="mono">' + p.ref + '</b><small class="mut">' + p.agent + '</small></td>' +
+    (f === 'tous' ? 'Tous' : payMeta(f).n) + '<span>' + (f === 'tous' ? d.pay.length : d.pay.filter(p => p.st === f).length) + '</span></button>').join('');
+  const rows = list.slice(0, 30).map(p => {
+    const m = findMembre(p.m) || { nom: p.m };
+    const actionable = p.st === 'déclaré' || p.st === 'en attente';
+    return '<tr><td data-l="Référence"><b class="mono">' + p.ref + '</b><small class="mut">' + esc(p.agent) + '</small></td>' +
       '<td data-l="Adhérent">' + avatar(m.nom) + esc(m.nom) + '</td>' +
       '<td data-l="Montant"><b>' + fmt(p.montant) + '</b></td>' +
-      '<td data-l="Moyen">' + ICON(MOYENS_ICON[p.moyen] || 'wallet') + ' ' + p.moyen + '</td>' +
-      '<td data-l="Date">' + dstr(p.date) + '</td><td data-l="Statut">' + bdg(p.st) + '</td>' +
-      '<td><button class="btn s" onclick="receiptRef(\'' + p.ref + '\')">Reçu</button></td></tr>';
+      '<td data-l="Moyen">' + ICON(MOYENS_ICON[p.moyen] || 'wallet') + ' ' + esc(p.moyen) + '</td>' +
+      '<td data-l="Date">' + dstr(p.date) + '</td><td data-l="Statut">' + bdg(p.st) + (actionable ? '<small class="warn-t tiny">à rapprocher</small>' : '') + '</td>' +
+      '<td>' + (actionable ? '<button class="btn s p" onclick="openReconcile(\'' + p.ref + '\')">Vérifier</button>' : '<button class="btn s" onclick="receiptRef(\'' + p.ref + '\')">Reçu</button>') + '</td></tr>';
   }).join('');
-  return head('Paiements', 'Chaque encaissement laisse une trace. Les reçus sont générés dans le navigateur.',
+  return head('Paiements', 'Chaque encaissement laisse une trace. Les paiements déclarés restent à vérifier avant d’être comptés en caisse.',
     '<button class="btn s" onclick="exportCSV(\'paiements\')">' + ICON('file-csv') + 'Exporter</button><button class="btn p s" onclick="newPayment()">' + ICON('plus') + 'Enregistrer un paiement</button>') +
-    '<div class="grid g4">' + kpi('Encaissé (34 j)', fmt(total), '<span class="up">' + d.pay.filter(p => p.st === 'confirmé').length + ' reçus</span>') +
-    kpi('En attente', fmt(pending), '<span class="warn-t">' + d.pay.filter(p => p.st === 'en attente').length + ' à vérifier</span>') +
-    kpi('Panier moyen', fmt(Math.round(total / Math.max(1, d.pay.filter(p => p.st === 'confirmé').length))), '<span class="mut">par encaissement</span>') +
-    kpi('Taux de recouvrement', Math.round(total / (total + pending || 1) * 100) + ' %', '<span class="mut">sur la période</span>') + '</div>' +
+    '<div class="grid g4">' + kpi('Encaissé (30 j)', fmt(total), '<span class="up">' + c30.filter(p => p.st === 'confirmé').length + ' reçus confirmés</span>') +
+    kpi('Déclaré', fmt(declares), '<span class="warn-t">' + c30.filter(p => p.st === 'déclaré').length + ' à vérifier</span>') +
+    kpi('En attente', fmt(pending), '<span class="warn-t">' + c30.filter(p => p.st === 'en attente').length + ' non réglé(s)</span>') +
+    kpi('Recouvrement', (total + declares + pending ? Math.round(total / (total + declares + pending) * 100) : 100) + ' %', '<span class="mut">confirmé / total attendu</span>') + '</div>' +
     '<div class="card table-card"><div class="table-tools"><div class="chips">' + chips + '</div><span class="tiny mut">' + list.length + ' opérations</span></div>' +
     (rows ? '<div class="table-scroll"><table><thead><tr><th>Référence</th><th>Adhérent</th><th>Montant</th><th>Moyen</th><th>Date</th><th>Statut</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' : emptyState('receipt', 'Aucun paiement', 'Modifiez le filtre pour afficher d’autres opérations.')) +
-    '<p class="tiny mut" style="margin-top:10px">' + ICON('lock') + ' Aucune transaction réelle. Les moyens de paiement sont affichés à titre d’exemple.</p></div>';
+    '<p class="tiny mut" style="margin-top:10px">' + ICON('lock') + ' Aucune transaction réelle. Un paiement déclaré doit être rapproché avant d’être compté comme recette confirmée.</p></div>';
 }
 
 function sallePre(id, d, k) {
@@ -619,7 +1031,7 @@ function viewSet() {
     '<div class="grid g2"><div class="card"><h3>Apparence</h3><p class="mut tiny">Le thème est mémorisé dans le navigateur.</p>' +
       '<div class="theme-choice"><button class="' + (!S.dark ? 'on' : '') + '" onclick="if(S.dark)toggleTheme()"><span class="tc light"></span>Clair</button><button class="' + (S.dark ? 'on' : '') + '" onclick="if(!S.dark)toggleTheme()"><span class="tc dark"></span>Sombre</button></div>' +
       '<div class="row gap8" style="margin-top:14px"><button class="btn s" onclick="S.col=!S.col;render()">' + ICON('bars') + (S.col ? 'Menu complet' : 'Menu compact') + '</button><button class="btn s" onclick="toggleTheme()">' + ICON('circle-half-stroke') + 'Basculer</button></div></div>' +
-      '<div class="card"><h3>Mode présentation</h3><p class="mut tiny">Un parcours guidé de 12 étapes, piloté au clavier. Idéal devant un client.</p>' +
+      '<div class="card"><h3>Mode présentation</h3><p class="mut tiny">Un parcours guidé de 17 étapes, piloté au clavier. Idéal devant un client.</p>' +
       '<div class="row gap8"><button class="btn p" onclick="startPres()">' + ICON('play') + 'Lancer</button><button class="btn" onclick="openShortcuts()">' + ICON('keyboard') + 'Raccourcis</button></div></div>' +
     '</div>' +
     '<div class="grid g2"><div class="card"><h3>Données de démonstration</h3><p class="mut tiny">Aucune donnée n’est envoyée ni conservée après rechargement. Les créations et corrections sont uniquement en mémoire.</p>' +

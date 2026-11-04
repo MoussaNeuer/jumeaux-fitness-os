@@ -6,7 +6,9 @@ const S = {
   view: 'land', salle: 'km', tab: 'dash', filter: 'tous', q: '', page: 0,
   sort: 'id', dark: false, col: false, ptab: 'home', logged: false, live: false,
   zen: false, ticket: null, payFilter: 'tous', journal: [],
-  teamSite: 'all', teamRole: 'all', teamQ: ''
+  teamSite: 'all', teamRole: 'all', teamQ: '',
+  finSite: 'net', finTab: 'synthese', depFilter: 'tous',
+  aboView: 'traiter', perfFocus: 'rev'
 };
 
 const $ = id => document.getElementById(id);
@@ -125,10 +127,15 @@ const STATUT_META = {
   expiré: ['b-ko', 'Expiré'],
   suspendu: ['b-off', 'Suspendu'],
   'confirmé': ['b-ok', 'Confirmé'],
+  'déclaré': ['b-info', 'Déclaré'],
   'en attente': ['b-warn', 'En attente'],
   annulé: ['b-ko', 'Annulé'],
   autorisé: ['b-ok', 'Autorisé'],
-  refusé: ['b-ko', 'Refusé']
+  refusé: ['b-ko', 'Refusé'],
+  'à traiter': ['b-warn', 'À traiter'],
+  'en cours': ['b-info', 'En cours'],
+  traité: ['b-ok', 'Traité'],
+  'bientôt disponible': ['b-off', 'Bientôt']
 };
 function bdg(st) {
   const meta = STATUT_META[st] || ['b-off', st];

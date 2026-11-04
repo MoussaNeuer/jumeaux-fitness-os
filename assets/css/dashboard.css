@@ -587,3 +587,125 @@ body.pres .main { padding-bottom: 200px; max-width: 1420px; }
 .team-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; padding-top: 4px; }
 .team-actions .btn { flex: 1 1 auto; justify-content: center; }
 
+/* ==========================================================================
+   Lecture stratégique, finance, abonnements & performance
+   ========================================================================== */
+
+/* ---------- Bandeau de lecture ---------- */
+.insight {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 18px; align-items: center;
+  padding: 20px 24px; border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--g) 22%, var(--bd));
+  background: linear-gradient(120deg, color-mix(in srgb, var(--g) 8%, var(--card)), var(--card) 62%);
+  box-shadow: var(--sh);
+}
+.insight-ic { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: var(--g); color: #fff; font-size: 18px; box-shadow: 0 14px 28px -18px color-mix(in srgb, var(--g) 80%, transparent); }
+.insight-copy { min-width: 0; }
+.insight-copy b { display: block; margin-top: 3px; font-size: 15px; line-height: 1.4; letter-spacing: -.01em; }
+.insight-copy p { margin-top: 4px; max-width: 760px; font-size: 11.5px; line-height: 1.55; color: var(--mut); }
+.insight-facts { display: flex; gap: 18px; flex-wrap: wrap; }
+.insight-facts > span { min-width: 76px; }
+.insight-facts small { display: block; font-size: 8.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--mut); }
+.insight-facts b { display: block; font-size: 16px; letter-spacing: -.03em; }
+
+/* ---------- Objectifs & prévisions ---------- */
+.obj-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+.obj-row > b { width: 92px; flex: 0 0 92px; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.obj-row .progress { flex: 1; margin: 0; }
+.obj-row > small { width: 138px; flex: 0 0 138px; text-align: right; font-size: 9.5px; color: var(--mut); font-variant-numeric: tabular-nums; }
+.obj-row .badge { min-width: 44px; justify-content: center; }
+.fc-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.fc-month { padding: 12px; border-radius: 12px; background: var(--bg-2); border: 1px solid var(--bd); }
+.fc-month small { display: block; font-size: 8.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--mut); }
+.fc-month b { display: block; margin-top: 2px; font-size: 16px; letter-spacing: -.03em; }
+.fc-month > span { display: block; font-size: 8.5px; color: var(--mut); }
+.fc-month em { display: block; margin-top: 4px; font-style: normal; font-size: 9.5px; font-weight: 700; color: var(--g); }
+
+/* ---------- Finance ---------- */
+.fin-toolbar { border-radius: 16px; }
+.fin-tabs { margin-top: 0; }
+.fin-legend { display: flex; flex-wrap: wrap; gap: 10px 24px; padding: 13px 16px; border-radius: 14px; border: 1px solid var(--bd); background: var(--card); box-shadow: var(--sh); font-size: 11.5px; color: var(--mut); }
+.fin-legend > span { display: inline-flex; align-items: center; }
+.fin-legend b { margin-right: 4px; color: var(--ink); }
+.st-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.st-dot.ok { background: var(--g); }
+.st-dot.info { background: var(--blue); }
+.st-dot.warn { background: var(--org); }
+.fin-note { display: flex; align-items: flex-start; gap: 9px; margin-top: 10px; padding: 11px 12px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--g) 18%, transparent); background: var(--g-soft); font-size: 11.5px; line-height: 1.5; color: var(--ink-2); }
+.fin-note > i { margin-top: 2px; flex: 0 0 auto; color: var(--g); }
+.fin-note.warn { border-color: color-mix(in srgb, var(--org) 24%, transparent); background: var(--org-soft); }
+.fin-note.warn > i { color: var(--org); }
+.fin-states { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.fin-states > span { position: relative; padding: 10px 11px 10px 23px; border-radius: 11px; background: var(--card-2); border: 1px solid var(--bd); }
+.fin-states .st-dot { position: absolute; left: 11px; top: 15px; margin: 0; }
+.fin-states b { display: block; font-size: 13.5px; letter-spacing: -.02em; }
+.fin-states small { display: block; font-size: 8.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--mut); }
+.fin-fc { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--bd); }
+.fin-fc:last-of-type { border-bottom: 0; }
+.fin-fc small { display: block; font-size: 8.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--mut); }
+.fin-fc b { display: block; font-size: 12.5px; }
+.recon-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.recon-grid > span, .recon-grid > div { padding: 10px 12px; border-radius: 10px; background: var(--card-2); border: 1px solid var(--bd); }
+.recon-grid small { display: block; font-size: 8.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--mut); }
+.recon-grid b { display: block; font-size: 13px; letter-spacing: -.01em; }
+
+/* ---------- Caisse ---------- */
+.cash-card { display: flex; flex-direction: column; border-top: 3px solid var(--c, var(--g)); }
+.cash-total { margin: 8px 0 10px; }
+.cash-total small { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: .07em; color: var(--mut); }
+.cash-total b { display: block; font-size: 26px; line-height: 1.15; letter-spacing: -.04em; color: var(--c, var(--g)); }
+.cash-total span { display: block; }
+.cash-split { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.cash-split > span { padding: 7px 8px; border-radius: 8px; background: var(--bg-2); border: 1px solid var(--bd); min-width: 0; }
+.cash-split small { display: block; font-size: 8px; color: var(--mut); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cash-split b { display: block; font-size: 10.5px; letter-spacing: -.01em; }
+.cash-recon { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 10px 0; }
+.cash-recon > div { padding: 11px; border-radius: 10px; background: var(--bg-2); border: 1px solid var(--bd); }
+.cash-recon small { display: block; font-size: 8.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--mut); }
+.cash-recon b { display: block; font-size: 14px; letter-spacing: -.02em; }
+
+/* ---------- Performance des salles ---------- */
+.perf-card { display: flex; flex-direction: column; border-top: 3px solid var(--c, var(--g)); }
+.perf-nums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin: 10px 0; }
+.perf-nums > span { padding: 8px 9px; border-radius: 9px; background: var(--card-2); border: 1px solid var(--bd); min-width: 0; }
+.perf-nums small { display: block; font-size: 8px; text-transform: uppercase; letter-spacing: .05em; color: var(--mut); }
+.perf-nums b { display: block; font-size: 16px; letter-spacing: -.03em; }
+.perf-mini { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-bottom: 4px; }
+.perf-mini > span { min-width: 0; }
+.perf-mini small { display: block; font-size: 7.5px; text-transform: uppercase; letter-spacing: .03em; color: var(--mut); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.perf-mini b { display: block; font-size: 11px; }
+.rank-n { display: inline-grid; place-items: center; width: 21px; height: 21px; border-radius: 50%; background: var(--bg-2); border: 1px solid var(--bd); font-size: 10.5px; }
+.perf-card .btn { margin-top: auto; }
+
+/* ---------- Abonnements : alertes & demandes ---------- */
+.sub-alerts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.sub-alert { display: flex; align-items: center; gap: 11px; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--bd); background: var(--card); box-shadow: var(--sh); }
+.sub-alert > i { margin-left: auto; font-size: 15px; color: var(--g); opacity: .65; }
+.sub-alert-n { display: grid; place-items: center; min-width: 38px; height: 38px; padding: 0 6px; border-radius: 11px; background: var(--g-soft); color: var(--g); font-size: 17px; font-weight: 800; letter-spacing: -.03em; }
+.sub-alert > span:nth-child(2) { min-width: 0; }
+.sub-alert > span:nth-child(2) b { display: block; font-size: 12px; }
+.sub-alert > span:nth-child(2) small { display: block; font-size: 9.5px; line-height: 1.35; color: var(--mut); }
+.sub-alert.warn .sub-alert-n { background: var(--org-soft); color: var(--org); }
+.sub-alert.warn > i { color: var(--org); }
+.sub-alert.ko .sub-alert-n { background: var(--red-soft); color: var(--red); }
+.sub-alert.ko > i { color: var(--red); }
+.sub-alert.info .sub-alert-n { background: var(--blue-soft); color: var(--blue); }
+.sub-alert.info > i { color: var(--blue); }
+.sub-demand { display: flex; flex-direction: column; gap: 3px; margin-top: 7px; padding: 8px 10px; border-radius: 9px; border: 1px solid color-mix(in srgb, var(--org) 24%, transparent); background: var(--org-soft); }
+.sub-demand b { font-size: 10px; color: var(--org); }
+.sub-demand small { font-size: 9px; color: var(--mut); }
+.sub-demand > span { margin-top: 3px; }
+.row-alert > td:first-child { box-shadow: inset 3px 0 0 var(--org); }
+tr.row-alert { background: color-mix(in srgb, var(--org) 5%, transparent); }
+
+/* ---------- Rapport financier (modale / impression) ---------- */
+.fin-report { overflow-x: auto; }
+.fin-report-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.fin-report-head h2 { font-size: 26px; letter-spacing: -.03em; line-height: 1.1; }
+.fin-report .recon-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.report-table { margin-top: 14px; }
+.report-table th, .report-table td { padding: 8px 9px; font-size: 11px; white-space: nowrap; }
+.report-table th:last-child, .report-table td:last-child { text-align: left; }
+.rep-total td { background: var(--bg-2); font-weight: 700; }
+.fin-report-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; font-size: 9.5px; color: var(--mut); }
+

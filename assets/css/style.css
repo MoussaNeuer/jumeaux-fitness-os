@@ -581,6 +581,45 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--g); }
 .demo-note { display: flex; align-items: flex-start; gap: 11px; margin-top: 20px; padding: 16px 18px; border-radius: 14px; background: var(--g-soft); border: 1px solid color-mix(in srgb, var(--g) 16%, transparent); font-size: 13px; color: var(--ink-2); }
 .demo-note > i { color: var(--g); font-size: 16px; margin-top: 2px; }
 
+/* Dossier commercial 01–04 */
+.pitch-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.pitch-card { position: relative; display: flex; flex-direction: column; gap: 9px; padding: 26px; overflow: hidden; }
+.pitch-num { position: absolute; top: 14px; right: 20px; font-size: 46px; font-weight: 900; letter-spacing: -.07em; line-height: 1; color: var(--bd-2); opacity: .55; pointer-events: none; }
+.pitch-ic { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: var(--g-soft); color: var(--g); font-size: 18px; }
+.pitch-card h3 { font-size: 20px; letter-spacing: -.025em; }
+.pitch-card > p { font-size: 13.5px; line-height: 1.6; }
+.pitch-list { display: grid; gap: 7px; margin-top: 2px; }
+.pitch-list li { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.5; color: var(--ink-2); }
+.pitch-list i { margin-top: 3px; color: var(--g); font-size: 10px; flex: 0 0 auto; }
+.pitch-card:first-child .pitch-list i { color: var(--red); }
+.pitch-scenario { display: flex; align-items: flex-start; gap: 9px; margin-top: auto; padding: 11px 13px; border-radius: 11px; border: 1px solid var(--bd); background: var(--bg-2); font-size: 11.5px; line-height: 1.5; color: var(--ink-2); }
+.pitch-scenario > i { margin-top: 2px; flex: 0 0 auto; color: var(--g); }
+.pitch-scenario.warn { background: var(--org-soft); border-color: color-mix(in srgb, var(--org) 22%, transparent); }
+.pitch-scenario.warn > i { color: var(--org); }
+.pitch-scenario.info { background: var(--blue-soft); border-color: color-mix(in srgb, var(--blue) 20%, transparent); }
+.pitch-scenario.info > i { color: var(--blue); }
+.pitch-scenario.ok { background: var(--g-soft); border-color: color-mix(in srgb, var(--g) 20%, transparent); }
+.pitch-benefits { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pitch-benefits > span { padding: 12px; border-radius: 12px; background: var(--bg-2); border: 1px solid var(--bd); }
+.pitch-benefits b { display: block; font-size: 20px; letter-spacing: -.03em; color: var(--g); }
+.pitch-benefits small { display: block; margin-top: 2px; font-size: 10px; line-height: 1.4; color: var(--mut); }
+.pitch-benefits em { font-style: normal; font-weight: 700; color: var(--ink-2); }
+.deploy { display: grid; gap: 7px; }
+.deploy-step { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 11px; border-radius: 10px; background: var(--bg-2); border: 1px solid var(--bd); }
+.deploy-n { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--g); color: #fff; font-size: 11px; font-weight: 800; }
+.deploy-step b { display: block; font-size: 12px; }
+.deploy-step small { display: block; font-size: 10px; line-height: 1.4; color: var(--mut); }
+.deploy-step em { font-style: normal; font-size: 9.5px; font-weight: 700; color: var(--g); white-space: nowrap; }
+.pitch-final { display: flex; align-items: center; justify-content: space-between; gap: 26px; margin-top: 18px; padding: 32px 34px; border-radius: var(--r-lg); color: #EFFAF4; background:
+    radial-gradient(700px 340px at 88% 0%, rgba(47, 208, 123, .2), transparent 62%),
+    linear-gradient(145deg, #0A2116, #07130D); box-shadow: var(--sh-lg); }
+.pitch-final > div:first-child { min-width: 0; }
+.pitch-final h3 { color: #fff; font-size: clamp(21px, 2.5vw, 31px); line-height: 1.12; margin: 7px 0 7px; max-width: 680px; }
+.pitch-final p { color: rgba(226, 243, 234, .68); font-size: 12.5px; line-height: 1.6; max-width: 700px; }
+.pitch-final .btn.p { flex: 0 0 auto; }
+.pitch-final .btn.ghost { color: #DDF3E6; border-color: rgba(255, 255, 255, .2); }
+.pitch-final .btn.ghost:hover { background: rgba(255, 255, 255, .08); }
+
 /* Expansion */
 .expansion {
   display: grid; grid-template-columns: 1.12fr .88fr; gap: 40px; align-items: center;
