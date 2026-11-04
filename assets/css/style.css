@@ -299,6 +299,28 @@ body[data-site] .btn.danger { background: var(--red-soft); border-color: color-m
 /* ---------- Marque ---------- */
 .brand { display: inline-flex; align-items: center; gap: 10px; color: inherit; }
 .brand:hover { color: inherit; }
+/* Logo officiel : toujours sur une pastille blanche pour rester lisible. */
+.logo-chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto; max-width: 100%;
+  padding: 4px 9px;
+  border-radius: 11px;
+  background: #fff;
+  border: 1px solid rgba(7, 19, 13, .09);
+  box-shadow: 0 8px 20px -14px rgba(7, 19, 13, .7);
+  line-height: 0;
+}
+.logo-chip .logo-word { display: block; height: 30px; width: auto; max-width: 100%; }
+.logo-chip .logo-mark { display: none; width: 28px; height: 28px; object-fit: contain; }
+.logo-chip.sm { padding: 3px 7px; border-radius: 9px; }
+.logo-chip.sm .logo-word { height: 24px; }
+.logo-chip.sm .logo-mark { width: 23px; height: 23px; }
+.logo-chip.xs { padding: 2px 5px; border-radius: 7px; box-shadow: none; }
+.logo-chip.xs .logo-word { height: 15px; }
+.logo-chip.xs .logo-mark { width: 16px; height: 16px; }
+.logo-chip.mark-only .logo-word { display: none; }
+.logo-chip.mark-only .logo-mark { display: block; }
+.top-brand { display: none; }
 .mark {
   width: 36px; height: 36px; flex: 0 0 36px;
   display: grid; place-items: center;
@@ -552,7 +574,8 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--g); }
 }
 .etab-top::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--c) 45%, transparent) 1px, transparent 0); background-size: 13px 13px; opacity: .35; mask-image: linear-gradient(110deg, #000, transparent 70%); }
 .etab-code { position: relative; z-index: 1; display: inline-flex; padding: 3px 8px; border-radius: 7px; background: var(--card); border: 1px solid var(--bd); font-size: 10px; font-weight: 800; letter-spacing: .1em; color: var(--mut); }
-.etab-mark { position: relative; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--card); color: var(--c); box-shadow: var(--sh); }
+.etab-mark { position: relative; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: #fff; border: 1px solid color-mix(in srgb, var(--c) 30%, var(--bd)); color: var(--c); box-shadow: var(--sh); }
+.etab-mark img { display: block; width: 30px; height: 30px; object-fit: contain; }
 .etab-open { position: absolute; z-index: 1; left: 16px; bottom: 14px; font-size: 10.5px; font-weight: 600; color: var(--mut); }
 .etab-body { padding: 16px; }
 .etab-body h3 { font-size: 14px; }

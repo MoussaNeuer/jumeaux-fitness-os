@@ -15,6 +15,18 @@ const $ = id => document.getElementById(id);
 const ALL_IDS = SALLES.map(s => s.id);
 const ICON = n => '<i class="fa-solid fa-' + n + '" aria-hidden="true"></i>';
 
+// ---------- Logo officiel ----------
+// Le logo source est un lockup sombre sur fond blanc : on l’affiche toujours
+// dans une pastille blanche pour rester lisible sur les surfaces claires et sombres.
+const LOGO_FULL = 'assets/images/logo.png?v=7.3';
+const LOGO_MARK = 'assets/images/logo-mark.png?v=7.3';
+function logoChip(cls) {
+  return '<span class="logo-chip' + (cls ? ' ' + cls : '') + '">' +
+    '<img class="logo-word" src="' + LOGO_FULL + '" alt="Jumeaux Fitness OS">' +
+    '<img class="logo-mark" src="' + LOGO_MARK + '" alt="" aria-hidden="true">' +
+    '</span>';
+}
+
 function go(patch) {
   const prevSalle = S.salle;
   Object.assign(S, patch || {});
@@ -301,8 +313,8 @@ function exportCSV(kind) {
     SALLES.forEach(s => D[s.id].pay.forEach(p => rows.push([p.ref, findMembre(p.m)?.nom || p.m, p.montant, p.moyen, dstr(p.date), p.st, p.agent])));
     name = 'paiements';
   } else {
-    rows.push(['Salle', 'Date', 'Heure', 'Adhérent', 'Type', 'Résultat']);
-    SALLES.forEach(s => D[s.id].pre.forEach(p => rows.push([s.nom, dstr(p.at), hhmm(p.at), findMembre(p.m)?.nom || p.m, p.type, p.ok ? 'Autorisé' : 'Refusé'])));
+    rows.push(['Salle', 'Date', 'Heure', 'Adhérent', 'Type', 'Responsable', 'Motif', 'Résultat']);
+    SALLES.forEach(s => D[s.id].pre.forEach(p => rows.push([s.nom, dstr(p.at), hhmm(p.at), findMembre(p.m)?.nom || p.m, p.type, p.responsable || '', p.motif || '', p.ok ? 'Autorisé' : 'Refusé'])));
     name = 'presences';
   }
   downloadFile('jumeaux-' + name + '-' + new Date().toISOString().slice(0, 10) + '.csv', '\uFEFF' + toCSV(rows), 'text/csv;charset=utf-8');

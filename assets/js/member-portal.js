@@ -59,7 +59,7 @@ function portal() {
   const home = '<div class="p-hello"><span>' + hello + ',</span><h2>' + esc(m.nom.split(' ')[0]) + '</h2><small>' + dayLabel(new Date()) + '</small></div>' +
     expBanner(m, jr) +
     '<div class="idc">' +
-      '<div class="idc-top"><span class="idc-brand">' + ICON('dumbbell') + ' JUMEAUX FITNESS</span><span class="badge ' + (statut(m) === 'actif' ? 'b-ok' : 'b-warn') + '">' + esc(statut(m) === 'actif' ? 'Actif' : 'Expire bientôt') + '</span></div>' +
+      '<div class="idc-top"><span class="idc-brand">' + logoChip('xs') + '</span><span class="badge ' + (statut(m) === 'actif' ? 'b-ok' : 'b-warn') + '">' + esc(statut(m) === 'actif' ? 'Actif' : 'Expire bientôt') + '</span></div>' +
       '<div class="idc-name"><b>' + esc(m.nom) + '</b><span>' + m.id + ' · ' + esc(d.nom) + '</span></div>' +
       '<div class="idc-bottom"><div class="idc-exp"><small>Valable jusqu’au</small><b>' + dstr(m.exp) + '</b><span>' + (jr >= 0 ? jr + ' jours restants' : 'Expiré') + ' · ' + p.n + '</span></div>' +
       '<button class="idc-qr" onclick="bigQr()" aria-label="Agrandir mon QR code">' + qrSvg(m, 70) + '</button></div>' +
@@ -136,7 +136,7 @@ function portal() {
   const nav = [['home', 'house', 'Accueil'], ['abo', 'id-card', 'Abonnement'], ['pay', 'receipt', 'Paiements'], ['pre', 'dumbbell', 'Présences'], ['plan', 'calendar-days', 'Planning'], ['prof', 'user', 'Profil']]
     .map(t => '<button class="' + (S.ptab === t[0] ? 'on' : '') + '" onclick="S.ptab=\'' + t[0] + '\';render()">' + ICON(t[1]) + '<span>' + t[2] + '</span></button>').join('');
 
-  return '<div class="portal-wrap"><div class="portal-side"><a class="brand" href="#" onclick="go({view:\'land\'});return false;"><span class="mark">' + ICON('dumbbell') + '</span><span class="brand-t">JUMEAUX <b>OS</b></span></a>' +
+  return '<div class="portal-wrap"><div class="portal-side"><a class="brand" href="#" onclick="go({view:\'land\'});return false;">' + logoChip() + '</a>' +
     '<span class="site-brand on-dark" style="margin-top:18px">' + ICON('palette') + esc(d.nom) + ' · ' + esc(d.palette) + '</span>' +
     '<span class="eyebrow light" style="margin-top:14px">Espace adhérent</span><h2 class="serif">« Ma salle,<br>dans ma poche. »</h2>' +
     '<p class="mut">Carte numérique, QR d’accès, abonnement et reçus. Le client retrouve tout sans installer d’application.</p>' +
@@ -148,7 +148,7 @@ function portal() {
 
 function portalLogin(m) {
   return '<div class="login-wrap"><div class="login-card">' +
-    '<a class="brand" href="#" onclick="go({view:\'land\'});return false;"><span class="mark">' + ICON('dumbbell') + '</span><span class="brand-t">JUMEAUX <b>OS</b></span></a>' +
+    '<a class="brand" href="#" onclick="go({view:\'land\'});return false;">' + logoChip() + '</a>' +
     '<span class="site-brand" style="margin-top:14px">' + ICON('palette') + esc(D[m.home].nom) + ' · ' + esc(D[m.home].palette) + '</span>' +
     '<span class="eyebrow" style="margin-top:12px">Espace adhérent</span><h1 class="serif">Votre salle,<br>dans votre poche.</h1>' +
     '<p class="mut">Carte numérique, QR d’accès, abonnement et reçus. Aucun mot de passe réel n’est demandé.</p>' +

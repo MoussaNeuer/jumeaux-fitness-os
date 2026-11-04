@@ -118,7 +118,7 @@ moyen. Elle met en évidence les logiques différentes entre volume d’adhéren
 
 ### Mode présentation
 
-Parcours guidé en **17 étapes** couvrant la vision, le réseau, la finance consolidée,
+Parcours guidé en **21 étapes** couvrant la vision, le réseau, la finance consolidée,
 le rapprochement, la performance des salles, l’équipe et les accès, une salle, les adhérents,
 les renouvellements, le contrôle d’accès, les paiements, la qualité, l’espace client,
 la demande de renouvellement, le planning, l’expansion et la décision de pilote.
@@ -147,7 +147,7 @@ assets/js/landing.js       page commerciale
 assets/js/dashboard.js     réseau, finance, performance, équipe & accès, back-offices, rapports
 assets/js/actions.js       adhérents, abonnements, finance, reçus, scanner, borne
 assets/js/member-portal.js connexion, espace adhérent, planning et demandes
-assets/js/presentation.js  parcours guidé en 17 étapes
+assets/js/presentation.js  parcours guidé en 21 étapes
 assets/js/app.js           routage par ancre, rendu, horloge, service worker
 assets/fonts/              Inter, Instrument Serif, Font Awesome
 assets/icons/              icônes PWA et favicon
@@ -195,3 +195,30 @@ La lecture caméra dépend du navigateur. Les tarifs, rôles et règles multi-sa
 Les chiffres financiers, charges, objectifs et prévisions sont des **hypothèses de
 simulation**. Ils ne constituent ni des comptes réels ni une promesse de gain. Ils doivent
 être confrontés aux vrais volumes et factures de Jumeaux Fitness avant toute décision.
+
+## Version « pro » (v7, révision 7.3)
+
+Nouveautés, toutes simulées avec des données fictives :
+
+- **Rôles** : bandeau en haut de chaque écran du back-office pour passer de Direction à Responsable de salle, Agent d'accueil ou Comptable. Le menu et les données changent, et ouvrir une autre salle est refusé (critères AC-01 et AC-02).
+- **Pilote & décisions** (menu Analyse) : trajectoire en 9 phases, 9 critères d'acceptation, décisions attendues, fiche 1 page à imprimer en PDF.
+- **Paiement Wave / Orange Money** (onglet Paiements) : scénario simulé de demande, redirection et réponses de webhook. Aucune signature réelle n’est vérifiée et aucun fournisseur n’est contacté.
+- **Panne réseau** (bouton du bandeau) : contrôle « manuel requis » au lieu d'un faux accès, procédure manuelle tracée, régularisation au retour du réseau.
+- **Rappel d'expiration** (onglet Abonnements) : aperçu WhatsApp, SMS et notification, marqué « exemple ».
+- **Scan caméra** : repli jsQR (chargé à la demande) pour iPhone, où BarcodeDetector n'existe pas.
+- Mode présentation : 21 étapes, dont rôles, Mobile Money, panne réseau et décision demandée.
+- **Logo officiel** : le logo fourni (`assets/images/logo.jpeg`) est décliné en `logo.png` (lockup complet) et `logo-mark.png` (emblème carré). Il est présent sur la page d’accueil, le back-office, les quatre salles (en-tête de chaque back-office et cartes établissement), l’espace adhérent, la borne, les reçus, la présentation, la fiche pilote et la page 404. Les icônes PWA et le favicon sont générés à partir de ce logo.
+- `404.html`, image de partage 1200 x 630 (`assets/icons/og-image.png`), cache PWA `jfos-v7.3`.
+
+Fichiers ajoutés : `assets/js/pro.js`, `assets/css/pro.css`, `assets/vendor/jsQR.js`,
+`assets/images/logo.png`, `assets/images/logo-mark.png`.
+À chaque modification, changer ensemble `?v=` dans `index.html` et `V` dans `sw.js`.
+
+> Le script `assets/js/pro.js` se branche sur les fonctions de `app.js` : il doit être chargé
+> **après** `assets/js/app.js` dans `index.html`.
+
+## Avant la réunion
+1. Ouvrir le site une fois avec internet, puis recharger (mise à jour du cache).
+2. Tester sur un vrai iPhone (Safari) et un vrai Android (Chrome) : menu, rôles, scan caméra, plein écran, installation PWA.
+3. Lancer Lighthouse (Chrome, onglet Lighthouse, mode mobile) : viser plus de 90 en accessibilité et performance.
+4. Utiliser « Réinitialiser la démo » (Paramètres) entre deux présentations.

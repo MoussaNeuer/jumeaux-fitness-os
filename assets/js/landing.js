@@ -8,7 +8,7 @@ function etabCard(s, i) {
   return '<article class="card etab-card hv' + rv(i) + '">' +
     '<div class="etab-top" style="--c:' + s.color + '">' +
       '<span class="etab-code">' + s.id.toUpperCase() + '</span>' +
-      '<span class="etab-mark" aria-hidden="true">' + ICON('dumbbell') + '</span>' +
+      '<span class="etab-mark" aria-hidden="true"><img src="' + LOGO_MARK + '" alt=""></span>' +
       '<span class="etab-open">Ouvert en ' + s.ouvert + '</span>' +
     '</div>' +
     '<div class="etab-body">' +
@@ -75,7 +75,7 @@ function landing() {
 
   // ---------------- Navigation ----------------
   '<header class="lnav"><div class="wrap nav">' +
-    '<a class="brand" href="#top" aria-label="Jumeaux Fitness OS, accueil"><span class="mark">' + ICON('dumbbell') + '</span><span class="brand-t">JUMEAUX <b>OS</b></span></a>' +
+    '<a class="brand" href="#top" aria-label="Jumeaux Fitness OS, accueil">' + logoChip() + '</a>' +
     '<nav class="links" aria-label="Navigation principale"><a href="#produit">Le produit</a><a href="#fonctions">Fonctionnalités</a><a href="#etablissements">Établissements</a><a href="#demo">Essayer</a></nav>' +
     '<div class="row gap8">' +
       '<button class="btn icon" aria-label="Changer de thème" data-tip="Thème clair / sombre" onclick="toggleTheme()">' + ICON('circle-half-stroke') + '</button>' +
@@ -239,7 +239,7 @@ function landing() {
   '<section class="wrap sec" id="demo">' +
     '<div class="sec-head"><span class="eyebrow">Essayez maintenant</span><h2>Trois portes d’entrée.<br><span class="serif">Aucune installation.</span></h2></div>' +
     '<div class="try-grid">' + entry + '</div>' +
-    '<div class="demo-note rv">' + ICON('wand-magic-sparkles') + '<span><b>Astuce de démonstration.</b> Ouvrez le <a href="#" onclick="startPres();return false;">mode présentation</a> pour un parcours guidé de 17 étapes, ou testez le scanner QR dans le back-office de Keur Massar.</span></div>' +
+    '<div class="demo-note rv">' + ICON('wand-magic-sparkles') + '<span><b>Astuce de démonstration.</b> Ouvrez le <a href="#" onclick="startPres();return false;">mode présentation</a> pour un parcours guidé de 21 étapes, ou testez le scanner QR dans le back-office de Keur Massar.</span></div>' +
   '</section>' +
 
   // ---------------- Expansion ----------------
@@ -271,7 +271,7 @@ function landing() {
   '</section>' +
   '</main>' +
 
-  '<footer class="lfoot"><div class="wrap"><div class="brand small"><span class="mark">' + ICON('dumbbell') + '</span><span class="brand-t">JUMEAUX <b>OS</b></span></div>' +
+  '<footer class="lfoot"><div class="wrap"><div class="brand small">' + logoChip('sm') + '</div>' +
   '<p class="mut">Jumeaux Fitness OS — démonstration statique HTML, CSS et JavaScript. Aucun backend, aucune donnée personnelle, aucun paiement réel.</p>' +
   '<div class="foot-links"><a href="#produit">Le produit</a><a href="#etablissements">Établissements</a><a href="#demo">Démonstration</a><button class="linkbtn" onclick="go({view:\'set\'})">Paramètres</button></div>' +
   '</div></footer>';

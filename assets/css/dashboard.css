@@ -21,6 +21,9 @@
   overflow: hidden;
 }
 .side-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 4px 12px; }
+.app.col .side-top .logo-chip { padding: 4px; }
+.app.col .side-top .logo-word { display: none; }
+.app.col .side-top .logo-mark { display: block; }
 .side-top .collapse { border-color: transparent; background: transparent; color: var(--mut); width: 32px; min-width: 32px; }
 .side-top .collapse:hover { background: var(--bg-2); }
 .side-site {
@@ -273,6 +276,8 @@ tr.c:hover .rowlink i { transform: translateX(3px); }
 
 /* ---------- Back-office salle ---------- */
 .salle-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+.salle-lockup { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.salle-lockup .site-brand { margin-bottom: 0; }
 .salle-head .page-title { display: flex; align-items: center; gap: 9px; }
 .salle-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .tabs {
@@ -299,7 +304,8 @@ tr.c:hover .rowlink i { transform: translateX(3px); }
 .site-head { display: flex; align-items: flex-start; gap: 12px; }
 .site-head > div { flex: 1; min-width: 0; }
 .site-head h3 { font-size: 15px; }
-.site-mark { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 42px; border-radius: 12px; background: color-mix(in srgb, var(--c) 15%, var(--card)); color: var(--c); font-size: 16px; }
+.site-mark { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 42px; border-radius: 12px; overflow: hidden; background: #fff; border: 1px solid color-mix(in srgb, var(--c) 32%, var(--bd)); color: var(--c); font-size: 16px; }
+.site-mark img { display: block; width: 30px; height: 30px; object-fit: contain; }
 .site-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0 12px; }
 .site-kpis > div { padding: 10px; border-radius: 10px; background: var(--card-2); border: 1px solid var(--bd); }
 .site-kpis b { display: block; font-size: 19px; letter-spacing: -.03em; }

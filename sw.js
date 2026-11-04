@@ -1,11 +1,13 @@
 // ============================================================================
 // Service worker — ressources statiques uniquement, aucune donnée métier
 // ============================================================================
-const V = 'jfos-v6';
+const V = 'jfos-v7.3';
 const FILES = [
   './',
   './index.html',
   './manifest.json',
+  './assets/images/logo.png',
+  './assets/images/logo-mark.png',
   './assets/icons/icon.svg',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
@@ -27,6 +29,11 @@ const FILES = [
   './assets/js/actions.js',
   './assets/js/member-portal.js',
   './assets/js/presentation.js',
+  './assets/js/pro.js',
+  './assets/css/pro.css',
+  './assets/vendor/jsQR.js',
+  './assets/icons/og-image.png',
+  './404.html',
   './assets/js/app.js'
 ];
 

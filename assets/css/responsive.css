@@ -82,6 +82,8 @@
   .nav-item.on::before, .app.col .nav-item.on::before { left: 20%; right: 20%; top: auto; bottom: 0; width: auto; height: 2.5px; }
   .nav-badge { position: absolute; top: 3px; right: 5px; margin: 0; padding: 0 4px; font-size: 8px; }
   .menu-btn { display: none; }
+  .top-brand { display: inline-flex; }
+  .top-brand .logo-chip { box-shadow: none; }
   .content { min-height: 100vh; }
   .main { padding: 18px 16px 98px; }
   .top { padding: 8px 14px; min-height: 60px; gap: 8px; }

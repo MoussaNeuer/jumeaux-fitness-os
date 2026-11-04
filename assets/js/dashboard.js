@@ -38,7 +38,7 @@ function shell(body) {
   return '<div class="app' + (S.col ? ' col' : '') + '">' +
     '<aside class="side" aria-label="Navigation de l’application">' +
       '<div class="side-top">' +
-        '<a class="brand" href="#" onclick="go({view:\'land\'});return false;" aria-label="Retour à l’accueil"><span class="mark">' + ICON('dumbbell') + '</span><span class="brand-t lbl">JUMEAUX <b>OS</b></span></a>' +
+        '<a class="brand" href="#" onclick="go({view:\'land\'});return false;" aria-label="Retour à l’accueil">' + logoChip() + '</a>' +
         '<button class="btn icon collapse" aria-label="Réduire le menu" onclick="S.col=!S.col;render()">' + ICON('angles-left') + '</button>' +
       '</div>' +
       (inSalle ? '<div class="side-site"><span class="side-site-dot" style="background:' + salle.color + '"></span><span class="lbl"><b>' + esc(salle.nom) + '</b><small>Back-office local</small></span></div>' : '') +
@@ -52,6 +52,7 @@ function shell(body) {
     '<div class="content">' +
       '<header class="top">' +
         '<button class="btn icon menu-btn" aria-label="Agrandir ou réduire le menu" onclick="S.col=!S.col;render()">' + ICON('bars') + '</button>' +
+        '<a class="brand top-brand" href="#" onclick="go({view:\'land\'});return false;" aria-label="Jumeaux Fitness OS, accueil">' + logoChip('sm mark-only') + '</a>' +
         '<nav class="crumb" aria-label="Fil d’Ariane">' + crumb + '</nav>' +
         '<div class="search" role="search"><span class="search-ic">' + ICON('magnifying-glass') + '</span>' +
           '<input id="gq" type="search" placeholder="Rechercher un adhérent, un identifiant…" aria-label="Rechercher un adhérent" value="' + esc(S.q) + '" oninput="searchM(this.value)">' +
@@ -271,7 +272,8 @@ function chargeSplitNet() {
 
 function finSiteChips() {
   const cur = S.finSite || 'net';
-  return [{ id: 'net', nom: 'Tout le réseau', color: '#0E7A4B' }].concat(SALLES).map(s =>
+  const sites = S.role === 'compta' ? SALLES.filter(s => s.id === S.rsite) : [{ id: 'net', nom: 'Tout le réseau', color: '#0E7A4B' }].concat(SALLES);
+  return sites.map(s =>
     '<button class="chip' + (cur === s.id ? ' on' : '') + '" onclick="go({view:\'fin\',finSite:\'' + s.id + '\',finTab:S.finTab,depFilter:\'tous\'})">' +
       (s.id === 'net' ? ICON('layer-group') : '<span class="site-dot" style="background:' + s.color + '"></span>') + esc(s.nom) +
       '<span>' + (s.id === 'net' ? Math.round(net.rev / 1000) + 'k' : Math.round(kp(s.id).rev / 1000) + 'k') + '</span></button>').join('');
@@ -425,7 +427,8 @@ function finRapports(site) {
     const profit = rev - chg;
     return { m, rev, chg, profit, marge: rev ? Math.round(profit / rev * 100) : 0 };
   });
-  const siteRows = SALLES.map(s => {
+  const reportSites = S.role === 'compta' ? SALLES.filter(s => s.id === S.rsite) : SALLES;
+  const siteRows = reportSites.map(s => {
     const x = finSite(s.id);
     return '<tr><td data-l="Salle"><span class="site-dot" style="background:' + s.color + '"></span><b>' + esc(s.nom) + '</b></td><td data-l="CA">' + fmt(x.rev) + '</td><td data-l="Charges">' + fmt(x.chg) + '</td><td data-l="Résultat"><b class="' + (x.profit >= 0 ? 't-ok' : 't-ko') + '">' + fmt(x.profit) + '</b><small class="mut">' + x.marge + ' %</small></td><td data-l="Encaissé">' + fmt(x.encaisse) + '</td><td data-l="Impayés">' + fmt(x.impayes) + '</td><td data-l="Recouvrement">' + x.recouvrement + ' %</td></tr>';
   }).join('');
@@ -558,7 +561,7 @@ function initLive() {
 function viewEtab() {
   const cards = SALLES.map(s => {
     const k = kp(s.id);
-    return '<article class="card site-card"><div class="site-head"><span class="site-mark" style="--c:' + s.color + '">' + ICON('dumbbell') + '</span>' +
+    return '<article class="card site-card"><div class="site-head"><span class="site-mark" style="--c:' + s.color + '"><img src="' + LOGO_MARK + '" alt="" aria-hidden="true"></span>' +
       '<div><h3>' + esc(s.nom) + '</h3><p class="mut tiny">' + esc(s.adresse) + '</p></div><span class="badge b-ok">Ouvert</span></div>' +
       '<div class="site-kpis"><div><b>' + k.act + '</b><small>actifs</small></div><div><b>' + k.pres + '</b><small>présences</small></div><div><b>' + fmtShort(k.rev) + '</b><small>FCFA / mois</small></div></div>' +
       '<div class="site-meta"><span>' + ICON('user-tie') + esc(s.resp) + '</span><span>' + ICON('users') + s.staff + ' collaborateurs</span><span>' + ICON('ruler-combined') + s.surface + ' m²</span><span>' + ICON('palette') + esc(s.palette) + '</span></div>' +
@@ -579,7 +582,7 @@ function viewSalle() {
     (t === 'mem' ? ICON('users') : t === 'pay' ? ICON('money-bill-wave') : t === 'pre' ? ICON('qrcode') : t === 'qual' ? ICON('shield-halved') : '') + TAB_LABEL[t] +
     (t === 'qual' && anomalies(id).total ? '<span class="tab-badge">' + anomalies(id).total + '</span>' : '') + '</button>').join('');
   const header = '<div class="salle-head"><div>' +
-    '<span class="site-brand"><i class="fa-solid fa-palette" aria-hidden="true"></i>' + esc(d.palette) + '</span>' +
+    '<div class="salle-lockup">' + logoChip('sm') + '<span class="site-brand"><i class="fa-solid fa-palette" aria-hidden="true"></i>' + esc(d.palette) + '</span></div>' +
     '<div class="row gap8"><span class="site-dot" style="background:' + d.color + '"></span><h1 class="page-title">Jumeaux Fitness — ' + esc(d.nom) + '</h1></div>' +
     '<p class="page-sub">Responsable : ' + esc(d.resp) + ' · ' + esc(d.adresse) + ' · ' + d.tel + '</p></div>' +
     '<div class="salle-head-actions"><span class="badge b-ok"><i></i>Données locales</span><button class="btn s" onclick="go({view:\'net\'})">' + ICON('chart-pie') + 'Vue réseau</button></div></div>' +
@@ -742,6 +745,9 @@ function sallePre(id, d, k) {
     const m = findMembre(p.m);
     return '<tr><td data-l="Heure"><b class="mono">' + hhmm(p.at) + '</b></td><td data-l="Adhérent">' + avatar(m.nom) + esc(m.nom) + '</td>' +
       '<td data-l="Type"><span class="type-pill">' + ICON(p.type === 'QR' ? 'qrcode' : 'hand-pointer') + p.type + '</span></td>' +
+      '<td data-l="Traçabilité">' + (p.type === 'Manuel' && p.responsable
+        ? '<b>' + esc(p.responsable) + '</b><small>' + esc(p.motif || '') + '</small>'
+        : '—') + '</td>' +
       '<td data-l="Résultat">' + bdg(p.ok ? 'autorisé' : 'refusé') + '</td></tr>';
   }).join('');
   return head('Contrôles d’accès', 'Le QR de l’adhérent est contrôlé en une seconde. Le résultat est immédiat et sans ambiguïté.',
@@ -761,7 +767,7 @@ function sallePre(id, d, k) {
         '<div id="sr" class="scan-slot" aria-live="polite"></div>' +
       '</div>' +
       '<div class="card table-card"><div class="chart-h"><div><h3>Dernières entrées</h3><p class="tiny mut">Aujourd’hui — ' + esc(d.nom) + '</p></div><button class="btn s" onclick="exportCSV(\'presences\')">CSV</button></div>' +
-        '<div class="table-scroll"><table><thead><tr><th>Heure</th><th>Adhérent</th><th>Type</th><th>Résultat</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '<div class="table-scroll"><table><thead><tr><th>Heure</th><th>Adhérent</th><th>Type</th><th>Responsable / motif</th><th>Résultat</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
         '<p class="tiny mut" style="margin-top:10px">' + ICON('circle-info') + ' Scannez le QR affiché dans l’espace adhérent avec un téléphone pour ouvrir la borne de démonstration.</p></div>' +
     '</div>';
 }
@@ -1031,7 +1037,7 @@ function viewSet() {
     '<div class="grid g2"><div class="card"><h3>Apparence</h3><p class="mut tiny">Le thème est mémorisé dans le navigateur.</p>' +
       '<div class="theme-choice"><button class="' + (!S.dark ? 'on' : '') + '" onclick="if(S.dark)toggleTheme()"><span class="tc light"></span>Clair</button><button class="' + (S.dark ? 'on' : '') + '" onclick="if(!S.dark)toggleTheme()"><span class="tc dark"></span>Sombre</button></div>' +
       '<div class="row gap8" style="margin-top:14px"><button class="btn s" onclick="S.col=!S.col;render()">' + ICON('bars') + (S.col ? 'Menu complet' : 'Menu compact') + '</button><button class="btn s" onclick="toggleTheme()">' + ICON('circle-half-stroke') + 'Basculer</button></div></div>' +
-      '<div class="card"><h3>Mode présentation</h3><p class="mut tiny">Un parcours guidé de 17 étapes, piloté au clavier. Idéal devant un client.</p>' +
+      '<div class="card"><h3>Mode présentation</h3><p class="mut tiny">Un parcours guidé de 21 étapes, piloté au clavier. Idéal devant un client.</p>' +
       '<div class="row gap8"><button class="btn p" onclick="startPres()">' + ICON('play') + 'Lancer</button><button class="btn" onclick="openShortcuts()">' + ICON('keyboard') + 'Raccourcis</button></div></div>' +
     '</div>' +
     '<div class="grid g2"><div class="card"><h3>Données de démonstration</h3><p class="mut tiny">Aucune donnée n’est envoyée ni conservée après rechargement. Les créations et corrections sont uniquement en mémoire.</p>' +

@@ -162,7 +162,7 @@ function receiptRef(ref) {
   }
   if (!p) return;
   const m = findMembre(p.m);
-  openModal('<div class="receipt" id="receipt"><div class="receipt-head"><div class="brand small"><span class="mark">' + ICON('dumbbell') + '</span><span class="brand-t">JUMEAUX <b>OS</b></span></div><span class="badge b-off">Reçu de démonstration</span></div>' +
+  openModal('<div class="receipt" id="receipt"><div class="receipt-head"><div class="brand small">' + logoChip('sm') + '</div><span class="badge b-off">Reçu de démonstration</span></div>' +
     '<h3>Reçu ' + p.ref + '</h3><p class="tiny mut">Jumeaux Fitness — ' + esc(D[site].nom) + ' · ' + dstr(p.date) + '</p>' +
     '<div class="receipt-lines"><div><span>Adhérent</span><b>' + esc(m.nom) + '</b></div><div><span>Formule</span><b>' + PLANS[m.plan].n + '</b></div><div><span>Moyen</span><b>' + p.moyen + '</b></div><div><span>Statut</span><b>' + p.st + '</b></div></div>' +
     '<div class="receipt-total"><span>Total</span><b>' + fmt(p.montant) + '</b></div>' +
@@ -309,7 +309,7 @@ function viewCheckin() {
   const tone = r.tone;
   const site = D[salleId];
   return '<div class="borne ' + tone + '">' +
-    '<header class="borne-head"><div class="brand"><span class="mark">' + ICON('dumbbell') + '</span><span class="brand-t">JUMEAUX <b>OS</b></span></div>' +
+    '<header class="borne-head"><div class="brand">' + logoChip() + '</div>' +
       '<span class="borne-site">' + ICON('location-dot') + esc(site.nom) + '</span><time id="liveClock">' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '</time></header>' +
     '<main class="borne-main">' +
       '<div class="borne-icon">' + ICON(tone === 'ok' ? 'circle-check' : tone === 'warn' ? 'triangle-exclamation' : 'circle-xmark') + '</div>' +
@@ -426,9 +426,10 @@ function savePlan(id) {
 
 // ---------------------------------------------------------------- FINANCE
 function newPaymentFin() {
-  const defSite = S.finSite && S.finSite !== 'net' ? S.finSite : S.salle;
+  const defSite = S.role === 'compta' ? S.rsite : (S.finSite && S.finSite !== 'net' ? S.finSite : S.salle);
+  const sites = S.role === 'compta' ? SALLES.filter(s => s.id === S.rsite) : SALLES;
   openModal('<h3>Encaisser un paiement</h3><p class="tiny mut">Écriture fictive ajoutée au journal de la session. Aucun débit réel.</p>' +
-    '<div class="f"><label>Salle<select id="fps" onchange="finPayMembers()">' + SALLES.map(s => '<option value="' + s.id + '"' + (s.id === defSite ? ' selected' : '') + '>' + s.nom + '</option>').join('') + '</select></label>' +
+    '<div class="f"><label>Salle<select id="fps" onchange="finPayMembers()">' + sites.map(s => '<option value="' + s.id + '"' + (s.id === defSite ? ' selected' : '') + '>' + s.nom + '</option>').join('') + '</select></label>' +
     '<label>Adhérent<select id="fpm">' + D[defSite].mem.map(m => '<option value="' + m.id + '">' + esc(m.nom) + ' — ' + m.id + '</option>').join('') + '</select></label>' +
     '<label>Formule<select id="fpp">' + PLANS.map((p, i) => '<option value="' + i + '">' + p.n + ' — ' + fmt(p.p) + '</option>').join('') + '</select></label>' +
     '<label>Moyen de paiement<select id="fpmoy">' + MOYENS.map(x => '<option>' + x + '</option>').join('') + '</select></label>' +
@@ -441,11 +442,13 @@ function newPaymentFin() {
 function finPayMembers() {
   const sel = $('fps'), target = $('fpm');
   if (!sel || !target) return;
+  if (S.role === 'compta') sel.value = S.rsite;
   target.innerHTML = D[sel.value].mem.map(m => '<option value="' + m.id + '">' + esc(m.nom) + ' — ' + m.id + '</option>').join('');
 }
 
 function savePayFin() {
   const site = $('fps').value, m = findMembre($('fpm').value), pl = +$('fpp').value;
+  if (!canAccessFinanceSite(site)) return toast('Accès refusé à cette salle', 'ko');
   if (!m) return;
   const st = $('fpst').value, moyen = $('fpmoy').value, d = D[site];
   d.pay.unshift({ ref: 'REC-' + site.toUpperCase() + '-' + Date.now().toString().slice(-5), m: m.id, montant: PLANS[pl].p, moyen, date: new Date(), st, agent: 'Direction' });
@@ -480,6 +483,7 @@ function openReconcile(ref) {
 function reconcilePay(ref, action) {
   const f = findPayment(ref);
   if (!f) return;
+  if (!canAccessFinanceSite(f.site)) return toast('Accès refusé à cette salle', 'ko');
   const st = action === 'confirmer' ? 'confirmé' : 'annulé';
   paymentStatus(ref, st);
   const p = f.pay;
@@ -490,8 +494,9 @@ function reconcilePay(ref, action) {
 
 function openExpense() {
   const site = S.finSite && S.finSite !== 'net' ? S.finSite : S.salle;
+  const sites = S.role === 'compta' ? SALLES.filter(s => s.id === S.rsite) : SALLES;
   openModal('<h3>Ajouter une dépense</h3><p class="tiny mut">Écriture fictive. Elle ajuste les charges de la salle dans cette session.</p>' +
-    '<div class="f"><label>Salle<select id="exs">' + SALLES.map(s => '<option value="' + s.id + '"' + (s.id === site ? ' selected' : '') + '>' + s.nom + '</option>').join('') + '</select></label>' +
+    '<div class="f"><label>Salle<select id="exs">' + sites.map(s => '<option value="' + s.id + '"' + (s.id === site ? ' selected' : '') + '>' + s.nom + '</option>').join('') + '</select></label>' +
     '<label>Catégorie<select id="exc">' + CHARGE_CATS.map(c => '<option value="' + c.id + '">' + c.n + ' — ' + (c.type === 'fixe' ? 'fixe' : 'variable') + '</option>').join('') + '</select></label>' +
     '<label>Libellé<input id="exl" placeholder="Ex. Réparation tapis de course"></label>' +
     '<label>Montant (FCFA)<input id="exa" type="number" min="0" step="500" value="25000"></label>' +
@@ -504,6 +509,7 @@ function openExpense() {
 
 function saveExpenseNow() {
   const site = $('exs').value, amount = Number($('exa').value);
+  if (!canAccessFinanceSite(site)) return toast('Accès refusé à cette salle', 'ko');
   if (!amount || amount <= 0) return toast('Saisissez un montant valide', 'ko');
   const row = addExpense(site, {
     catId: $('exc').value, label: ($('exl').value || '').trim(), amount,
@@ -566,7 +572,7 @@ function closeCaisseNow(id) {
 }
 
 function openFinReport() {
-  const site = S.finSite || 'net', isNet = site === 'net';
+  const site = S.role === 'compta' ? S.rsite : (S.finSite || 'net'), isNet = site === 'net';
   const f = isNet ? finNet() : finSite(site);
   const label = isNet ? 'Tout le réseau' : siteName(site);
   const rows = isNet ? finNet().rows : [finSite(site)];
@@ -583,7 +589,7 @@ function openFinReport() {
 }
 
 function exportFin(kind) {
-  const site = S.finSite || 'net', isNet = site === 'net';
+  const site = S.role === 'compta' ? S.rsite : (S.finSite || 'net'), isNet = site === 'net';
   const f = isNet ? finNet() : finSite(site);
   const label = isNet ? 'reseau' : site;
   let title = '', headers = [], rows = [];

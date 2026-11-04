@@ -35,7 +35,7 @@ function buildPresUI() {
   if (!p || p.dataset.built) return;
   p.dataset.built = '1';
   p.innerHTML = '<div class="pres-panel" role="dialog" aria-modal="false" aria-label="Mode présentation">' +
-    '<div class="pres-top"><span class="pres-kicker">' + ICON('play') + 'Mode présentation</span><span class="pres-count" id="pc"></span></div>' +
+    '<div class="pres-top"><span class="pres-left">' + logoChip('xs') + '<span class="pres-kicker">' + ICON('play') + 'Mode présentation</span></span><span class="pres-count" id="pc"></span></div>' +
     '<h3 id="pt"></h3><p id="px"></p>' +
     '<div class="pres-dots" id="pdots"></div>' +
     '<div class="pbar"><i id="pp"></i></div>' +
