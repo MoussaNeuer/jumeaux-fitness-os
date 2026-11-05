@@ -27,6 +27,8 @@ et consolide l’ensemble du réseau :
 - flux de passages simulé « en direct », graphiques, classement et objectifs ;
 - **Finance & comptabilité** : journal des encaissements, charges fixes et variables,
   caisse du jour, rapprochement, rapports par salle et exports Excel / PDF ;
+- **Tarifs & promotion** : la Direction fixe le prix mensuel hommes / femmes des quatre
+  salles, active une promotion réseau et vérifie la grille complète de 1 à 12 mois ;
 - recherche globale et exports CSV (adhérents, paiements, présences) ;
 - centre de contrôle qualité : doublons, fiches incomplètes, paiements à vérifier,
   corrections simulées en un clic ;
@@ -56,13 +58,33 @@ Chaque salle possède ses adhérents, abonnements, paiements, présences et stat
 
 - Tableau de bord, recherche, filtres, tri et pagination.
 - Création et modification d’adhérents, renouvellement d’abonnement.
-- **Abonnements** : formules mensuelle, trimestrielle et annuelle, dates de début et de fin,
-  auto-renouvellement simulé, historique, suspension temporaire, changement de formule,
-  alertes J-7 / J-3 / J-1, listes des expirés, des inactifs et des demandes à traiter.
+- **Abonnements** : formules de **1 à 12 mois** uniquement (pas de trimestre ni de semestre),
+  dates de début et de fin, auto-renouvellement simulé, historique, suspension temporaire,
+  changement de formule, alertes J-7 / J-3 / J-1, listes des expirés, des inactifs et des
+  demandes à traiter.
 - **Paiements** : trois statuts distincts — confirmé (encaissé), déclaré (à vérifier)
   et en attente (non réglé) — avec rapprochement, reçu imprimable et export.
 - **Caisse** : fond de caisse, encaissements du jour, montant théorique, clôture et écart.
 - Contrôle d’accès par sélecteur ou caméra (selon les API du navigateur).
+
+### Tarifs et promotion
+
+Les tarifs sont communs au réseau et pilotés depuis l’écran **Tarifs & promotion**
+de la Direction :
+
+- tarif de base pour **1 mois** : **20 000 FCFA** pour les hommes, **15 000 FCFA** pour les femmes ;
+- durées proposées : **1 à 12 mois uniquement** ; sans promotion, le prix est linéaire
+  (par exemple 3 mois = 60 000 FCFA pour un homme, 45 000 FCFA pour une femme) ;
+- promotion réseau activable, avec date de fin et prix par durée ; pour une durée donnée,
+  le prix promotionnel est identique pour les hommes et les femmes et remplace leurs tarifs linéaires ;
+- exemple de promotion de lancement : **1 mois 15 000 FCFA**, **2 mois 27 500 FCFA**,
+  **3 mois 40 000 FCFA** ; au-delà de 3 mois, le tarif linéaire s’applique ;
+- l’adhérent voit la promotion dans son espace et peut demander l’offre ; le gérant la
+  retrouve dans **Demandes à traiter**, avec la mention « offre promo », et l’acceptation
+  enregistre l’abonnement au prix promotionnel.
+
+Les tarifs saisis restent **en mémoire pour la session** : ils ne sont ni envoyés ni
+persistés sur un serveur. Les encaissements déjà enregistrés ne sont pas recalculés.
 
 ### Une identité visuelle par salle
 
@@ -96,6 +118,8 @@ présences, profil et renouvellement simulé. L’interface est optimisée pour 
 et reprend la couleur de la salle de l’adhérent.
 
 - Alerte d’expiration et demande de renouvellement transmise au gérant.
+- **Carte promotion** : l’adhérent voit l’offre réseau en cours, les prix par durée et
+  l’économie réalisée ; il peut demander l’offre au gérant en un clic.
 - Demande de changement de formule, annulation et préférence d’auto-renouvellement.
 - Historique des renouvellements et téléchargement du dernier reçu.
 - Onglet **Planning** : programme indicatif des cours et réservation de séance simulée
@@ -141,7 +165,7 @@ assets/css/style.css       base, thèmes, identités des salles, page d’accuei
 assets/css/dashboard.css   application, espace direction, équipe, tableaux, modales
 assets/css/components.css  présentation, espace adhérent, borne, login
 assets/css/responsive.css  adaptations mobile, tablettes et impression
-assets/js/data.js          données fictives, salles, palettes, rôles et comptes
+assets/js/data.js          données fictives, salles, palettes, tarifs, promotion et comptes
 assets/js/core.js          état, thème de salle, composants, graphiques, QR, exports
 assets/js/landing.js       page commerciale
 assets/js/dashboard.js     réseau, finance, performance, équipe & accès, back-offices, rapports
@@ -196,9 +220,11 @@ Les chiffres financiers, charges, objectifs et prévisions sont des **hypothèse
 simulation**. Ils ne constituent ni des comptes réels ni une promesse de gain. Ils doivent
 être confrontés aux vrais volumes et factures de Jumeaux Fitness avant toute décision.
 
-## Version « pro » (v7, révision 7.4)
+## Version « pro » (v7, révision 7.5)
 
 Nouveautés, toutes simulées avec des données fictives :
+
+- **Tarifs & promotion** : écran Direction pour modifier les prix hommes / femmes des quatre salles, activer une promotion réseau avec date de fin et grille de 1 à 12 mois. L’espace adhérent affiche l’offre et permet d’en faire la demande ; le gérant la traite dans « Demandes à traiter ».
 
 - **Rôles** : bandeau en haut de chaque écran du back-office pour passer de Direction à Responsable de salle, Agent d'accueil ou Comptable. Le menu et les données changent, et ouvrir une autre salle est refusé (critères AC-01 et AC-02).
 - **Pilote & décisions** (menu Analyse) : trajectoire en 9 phases, 9 critères d'acceptation, décisions attendues, fiche 1 page à imprimer en PDF.
@@ -208,7 +234,8 @@ Nouveautés, toutes simulées avec des données fictives :
 - **Scan caméra** : repli jsQR (chargé à la demande) pour iPhone, où BarcodeDetector n'existe pas.
 - Mode présentation : 21 étapes, dont rôles, Mobile Money, panne réseau et décision demandée. Le titre et la description s'affichent dans un bandeau compact en haut, libérant l'écran ; navigation aux flèches (← →), tactile par balayage horizontal sur mobile, et plein écran.
 - **Logo officiel** : le logo fourni (`assets/images/logo.jpeg`) est décliné en `logo.png` (lockup complet) et `logo-mark.png` (emblème carré). Il est présent sur la page d’accueil, le back-office, les quatre salles (en-tête de chaque back-office et cartes établissement), l’espace adhérent, la borne, les reçus, la présentation, la fiche pilote et la page 404. Les icônes PWA et le favicon sont générés à partir de ce logo.
-- `404.html`, image de partage 1200 x 630 (`assets/icons/og-image.png`), cache PWA `jfos-v7.4`.
+- `404.html`, image de partage 1200 x 630 (`assets/icons/og-image.png`), cache PWA `jfos-v7.5`.
+- Grille tarifaire **1 à 12 mois** avec prix hommes / femmes et promotion globale au réseau visible par les adhérents.
 
 Fichiers ajoutés : `assets/js/pro.js`, `assets/css/pro.css`, `assets/vendor/jsQR.js`,
 `assets/images/logo.png`, `assets/images/logo-mark.png`.

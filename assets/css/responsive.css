@@ -395,6 +395,8 @@
   .insight { grid-template-columns: 1fr; }
   .insight-ic { width: 40px; height: 40px; }
   .insight-facts { padding-left: 0; }
+  .tarif-f2, .tarif-f3 { grid-template-columns: 1fr; }
+  .tarif-ex-grid { grid-template-columns: repeat(2, 1fr); }
   .sub-alerts { grid-template-columns: 1fr 1fr; gap: 9px; }
   .sub-alert { padding: 11px 12px; gap: 8px; }
   .sub-alert-n { min-width: 33px; height: 33px; font-size: 15px; }

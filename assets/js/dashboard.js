@@ -3,7 +3,7 @@
 // ============================================================================
 
 const MENU = [
-  { g: 'Direction', items: [['net', 'chart-pie', 'Vue générale'], ['fin', 'scale-balanced', 'Finance & comptabilité'], ['team', 'user-shield', 'Équipe & accès'], ['etab', 'location-dot', 'Établissements'], ['exp', 'rocket', 'Expansion']] },
+  { g: 'Direction', items: [['net', 'chart-pie', 'Vue générale'], ['fin', 'scale-balanced', 'Finance & comptabilité'], ['tarifs', 'tags', 'Tarifs & promotion'], ['team', 'user-shield', 'Équipe & accès'], ['etab', 'location-dot', 'Établissements'], ['exp', 'rocket', 'Expansion']] },
   { g: 'Opérations', items: [['mem', 'users', 'Adhérents'], ['abo', 'arrows-rotate', 'Abonnements'], ['pay', 'money-bill-wave', 'Paiements'], ['pre', 'qrcode', 'Contrôles d’accès'], ['qual', 'shield-halved', 'Qualité des données']] },
   { g: 'Analyse', items: [['perf', 'ranking-star', 'Performance des salles'], ['rap', 'file-lines', 'Rapports'], ['set', 'gear', 'Paramètres']] }
 ];
@@ -33,7 +33,7 @@ function shell(body) {
 
   const crumb = inSalle
     ? '<a href="#" onclick="go({view:\'net\'});return false;">Réseau</a><i class="fa-solid fa-chevron-right"></i><b>' + esc(salle.nom) + '</b><i class="fa-solid fa-chevron-right"></i><span>' + (TAB_LABEL[S.tab] || '') + '</span>'
-    : '<b>' + ({ net: 'Vue générale', fin: 'Finance & comptabilité', perf: 'Performance des salles', team: 'Équipe & accès', etab: 'Établissements', exp: 'Expansion', rap: 'Rapports', set: 'Paramètres' }[S.view] || 'Réseau') + '</b>';
+    : '<b>' + ({ net: 'Vue générale', fin: 'Finance & comptabilité', tarifs: 'Tarifs & promotion', perf: 'Performance des salles', team: 'Équipe & accès', etab: 'Établissements', exp: 'Expansion', rap: 'Rapports', set: 'Paramètres' }[S.view] || 'Réseau') + '</b>';
 
   return '<div class="app' + (S.col ? ' col' : '') + '">' +
     '<aside class="side" aria-label="Navigation de l’application">' +
@@ -72,7 +72,7 @@ function shell(body) {
 }
 
 function nav(k) {
-  if (['net', 'fin', 'perf', 'team', 'etab', 'exp', 'rap', 'set'].includes(k)) go({ view: k });
+  if (['net', 'fin', 'tarifs', 'perf', 'team', 'etab', 'exp', 'rap', 'set'].includes(k)) go({ view: k });
   else go({ view: 'salle', tab: k, page: 0 });
 }
 function pick(v) {
@@ -142,7 +142,7 @@ function viewNet() {
   const revLeader = SALLES.slice().sort((a, b) => kp(b.id).rev - kp(a.id).rev)[0];
   const actLeader = SALLES.slice().sort((a, b) => kp(b.id).act - kp(a.id).act)[0];
   const revL = kp(revLeader.id), actL = kp(actLeader.id);
-  const plans = [0, 1, 2].map(i => ({ label: PLANS[i].n, value: SALLES.reduce((a, s) => a + D[s.id].mem.filter(m => m.plan === i).length, 0), color: PLANS[i].c }));
+  const plans = PLANS.map((p, i) => ({ label: p.n, value: SALLES.reduce((a, s) => a + D[s.id].mem.filter(m => m.plan === i).length, 0), color: p.c }));
   const fc = forecastNet();
   const late = latePayments();
   const exp = expiringMembers();
@@ -636,8 +636,13 @@ function salleAbo(id, d, k) {
   const view = S.aboView || 'traiter';
   const cards = PLANS.map((p, i) => {
     const n = d.mem.filter(m => m.plan === i).length;
-    return '<div class="card plan-card' + (p.pop ? ' pop' : '') + '" style="--c:' + p.c + '">' + (p.pop ? '<span class="plan-flag">Le plus choisi</span>' : '') +
-      '<span class="plan-name">' + p.n + '</span><b class="plan-price">' + fmt(p.p) + '</b><span class="tiny mut">' + p.j + ' jours · ' + p.d + '</span>' +
+    const promo = promotionPour(p.m);
+    const h = prixPlan(p.m, 'h'), f = prixPlan(p.m, 'f');
+    return '<div class="card plan-card' + (promo ? ' promo' : p.pop ? ' pop' : '') + '" style="--c:' + p.c + '">' +
+      (promo ? '<span class="plan-flag">Promo</span>' : p.pop ? '<span class="plan-flag">Le plus choisi</span>' : '') +
+      '<span class="plan-name">' + p.n + '</span>' +
+      '<div class="plan-pair"><span><small>Hommes</small><b>' + fmt(h) + '</b></span><span><small>Femmes</small><b>' + fmt(f) + '</b></span></div>' +
+      '<span class="tiny mut">' + p.j + ' jours · ' + p.d + '</span>' +
       '<div class="plan-bar"><i style="width:' + Math.round(n / d.mem.length * 100) + '%"></i></div><span class="tiny mut"><b>' + n + '</b> adhérents · ' + Math.round(n / d.mem.length * 100) + ' %</span></div>';
   }).join('');
 
@@ -657,11 +662,11 @@ function salleAbo(id, d, k) {
     const st = statut(m), jr = joursRestants(m), alert = renewalAlert(m);
     const auto = '<button class="badge ' + (m.autoRenew ? 'b-ok' : 'b-off') + '" title="Activer ou désactiver le renouvellement automatique" onclick="toggleAutoRenew(\'' + m.id + '\')">' + ICON('rotate') + (m.autoRenew ? 'Auto' : 'Manuel') + '</button>';
     const demand = m.demande && m.demande.statut === 'à traiter'
-      ? '<div class="sub-demand"><b>' + (m.demande.type === 'changement' ? 'Changement → ' + PLANS[m.demande.plan].n : 'Renouvellement demandé') + '</b><small>Demandé le ' + dstr(m.demande.at) + '</small>' +
+      ? '<div class="sub-demand"><b>' + (m.demande.type === 'changement' ? 'Changement → ' + PLANS[m.demande.plan].n : 'Renouvellement demandé') + (m.demande.promo ? ' · offre promo' : '') + '</b><small>Demandé le ' + dstr(m.demande.at) + '</small>' +
         '<span class="row gap6"><button class="btn s p" onclick="treatDemand(\'' + m.id + '\',true)">Accepter</button><button class="btn s danger" onclick="treatDemand(\'' + m.id + '\',false)">Refuser</button></span></div>'
       : '';
     return '<tr' + (m.demande && m.demande.statut === 'à traiter' ? ' class="row-alert"' : '') + '><td data-l="Adhérent">' + avatar(m.nom) + '<b>' + esc(m.nom) + '</b><small class="mut">' + m.id + ' · ' + (inactif(m) ? 'inactif ' + Math.floor((AUJ - lastVisit(m)) / J) + ' j' : 'vu le ' + dstr(lastVisit(m))) + '</small>' + demand + '</td>' +
-      '<td data-l="Formule">' + PLANS[m.plan].n + '<small class="mut">' + fmt(PLANS[m.plan].p) + '</small></td>' +
+      '<td data-l="Formule">' + PLANS[m.plan].n + '<small class="mut">' + fmt(prixMembre(m)) + '</small></td>' +
       '<td data-l="Début">' + dstr(m.debut || m.inscription) + '</td>' +
       '<td data-l="Échéance">' + dstr(m.exp) + '<small class="' + (st === 'expiré' ? 't-ko' : st === 'bientôt' ? 'warn-t' : 'mut') + '">' + (jr >= 0 ? 'J-' + jr : 'expiré depuis ' + Math.abs(jr) + ' j') + '</small></td>' +
       '<td data-l="Alerte">' + (alert ? '<span class="badge ' + (alert === 'expiré' ? 'b-ko' : 'b-warn') + '">' + alert + '</span>' : '<span class="badge b-ok">OK</span>') + '<small class="mut">' + bdg(st) + '</small></td>' +
@@ -700,7 +705,7 @@ function salleAbo(id, d, k) {
       '<p class="tiny mut" style="margin-top:10px">' + ICON('circle-info') + ' Un renouvellement met à jour l’échéance, l’historique et crée un reçu fictif. Aucun paiement réel n’est effectué.</p></div>' +
     '<div class="grid g2">' +
       '<div class="card"><div class="chart-h"><div><h3>Demandes à traiter</h3><p class="tiny mut">Demandes envoyées depuis l’espace adhérent.</p></div><span class="badge ' + (demands.length ? 'b-warn' : 'b-ok') + '">' + demands.length + '</span></div>' +
-        (demands.length ? demands.slice(0, 5).map(m => '<div class="act"><span class="act-ic warn">' + ICON(m.demande.type === 'changement' ? 'shuffle' : 'rotate') + '</span><span><b>' + esc(m.nom) + '</b><small>' + (m.demande.type === 'changement' ? 'Changement vers ' + PLANS[m.demande.plan].n : 'Renouvellement ' + PLANS[m.demande.plan].n) + ' · ' + dstr(m.demande.at) + '</small></span><span class="row gap6"><button class="btn s p" onclick="treatDemand(\'' + m.id + '\',true)">Accepter</button><button class="btn s danger" onclick="treatDemand(\'' + m.id + '\',false)">Refuser</button></span></div>').join('') : '<p class="tiny mut">Aucune demande en attente. Les demandes de l’espace adhérent apparaîtront ici.</p>') +
+        (demands.length ? demands.slice(0, 5).map(m => '<div class="act"><span class="act-ic warn">' + ICON(m.demande.type === 'changement' ? 'shuffle' : 'rotate') + '</span><span><b>' + esc(m.nom) + '</b><small>' + (m.demande.type === 'changement' ? 'Changement vers ' + PLANS[m.demande.plan].n : 'Renouvellement ' + PLANS[m.demande.plan].n) + (m.demande.promo ? ' · offre promo' : '') + ' · ' + dstr(m.demande.at) + '</small></span><span class="row gap6"><button class="btn s p" onclick="treatDemand(\'' + m.id + '\',true)">Accepter</button><button class="btn s danger" onclick="treatDemand(\'' + m.id + '\',false)">Refuser</button></span></div>').join('') : '<p class="tiny mut">Aucune demande en attente. Les demandes de l’espace adhérent apparaîtront ici.</p>') +
       '</div>' +
       '<div class="card"><div class="chart-h"><div><h3>Historique des renouvellements</h3><p class="tiny mut">120 derniers jours · auto ou manuel.</p></div><span class="badge b-off">' + history.length + '</span></div>' +
         (historyRows || '<p class="tiny mut">Aucun renouvellement enregistré sur la période.</p>') +
@@ -1018,6 +1023,92 @@ function simExp() {
     '<div class="exp-grid"><div><small>Seuil de rentabilité</small><b>' + p.seuil + ' <em>adhérents</em></b></div><div><small>Retour sur investissement</small><b>' + (p.retour ? p.retour + ' <em>mois</em>' : '—') + '</b></div><div><small>Réseau après ouverture</small><b>' + p.nouveaux + ' <em>adhérents</em></b></div><div><small>CA annualisé</small><b>' + (p.caNet / 1e6).toFixed(1).replace('.', ',') + ' <em>M FCFA</em></b></div></div>' +
     '<div class="progress lg"><i style="width:' + Math.min(100, Math.round(p.membres / Math.max(1, p.seuil) * 100)) + '%"></i></div><p class="tiny mut">' + (p.membres >= p.seuil ? 'Hypothèse au-dessus du seuil de rentabilité.' : 'Il manque ' + (p.seuil - p.membres) + ' adhérents pour atteindre le seuil.') + '</p>' +
     '<button class="btn p w" onclick="toast(\'Projection enregistrée pour la présentation (simulation)\',\'ok\')">Retenir cette projection</button>';
+}
+
+// ---------------------------------------------------------------- TARIFS & PROMOTION
+function viewTarifs() {
+  const offers = PROMO.offres || {};
+  const active = !!PROMO.active && promoOffres().length > 0;
+  const offreN = m => (offers[m] != null ? offers[m] : '');
+  const fin = PROMO.fin ? new Date(PROMO.fin).toISOString().slice(0, 10) : '';
+  const rows = PLANS.map(p => {
+    const promo = promotionPour(p.m);
+    const h = prixPlan(p.m, 'h'), f = prixPlan(p.m, 'f');
+    const baseH = TARIFS.h * p.m, baseF = TARIFS.f * p.m;
+    return '<tr><td data-l="Durée"><b>' + p.n + '</b><small class="mut">' + p.j + ' jours</small></td>' +
+      '<td data-l="Hommes · base">' + fmt(baseH) + '</td>' +
+      '<td data-l="Femmes · base">' + fmt(baseF) + '</td>' +
+      '<td data-l="Prix appliqué">' + (promo
+        ? '<b class="t-ok">' + fmt(h) + '</b><small class="mut">promo H / F · au lieu de ' + fmt(baseH) + ' H</small>'
+        : '<b>' + fmt(h) + ' H</b><small class="mut">' + fmt(f) + ' F</small>') + '</td>' +
+      '<td data-l="Économie">' + (promo
+        ? '<span class="t-ok">' + fmt(Math.max(0, baseH - h)) + ' H</span><small class="mut">' + fmt(Math.max(0, baseF - f)) + ' F</small>'
+        : '<span class="mut">—</span>') + '</td></tr>';
+  }).join('');
+  return head('Tarifs & promotion',
+    'La Direction fixe les tarifs des quatre salles et pilote une promotion visible par tous les adhérents. <span class="pill inline"><span class="dot"></span>Données fictives</span>',
+    '<button class="btn s" onclick="go({view:\'portal\'})">' + ICON('mobile-screen') + 'Voir l’espace adhérent</button>') +
+    '<div class="grid g4">' +
+      kpi('Tarif hommes', fmt(TARIFS.h) + ' <small class="kpi-of">/ mois</small>', '<span class="mut">base pour 1 mois</span>') +
+      kpi('Tarif femmes', fmt(TARIFS.f) + ' <small class="kpi-of">/ mois</small>', '<span class="mut">base pour 1 mois</span>') +
+      kpi('Promotion', active ? 'Active' : 'Inactive', '<span class="' + (active ? 'up' : 'mut') + '">' + (active ? ICON('tags') + ' ' + esc(PROMO.nom || 'Promotion') : 'aucune offre en cours') + '</span>') +
+      kpi('Durées', '1 à 12', '<span class="mut">mois uniquement · sans trimestre</span>') +
+    '</div>' +
+    '<div class="grid g2">' +
+      '<div class="card"><h3>Tarifs de base</h3><p class="mut tiny">Prix mensuel appliqué aux nouveaux abonnements et aux renouvellements des quatre salles.</p>' +
+        '<div class="f tarif-f2"><label>Hommes — FCFA / mois<input id="tarifH" type="number" min="500" step="500" value="' + TARIFS.h + '"></label>' +
+        '<label>Femmes — FCFA / mois<input id="tarifF" type="number" min="500" step="500" value="' + TARIFS.f + '"></label></div>' +
+        '<div class="tarif-ex"><span>' + ICON('calculator') + ' Exemple hors promotion</span><div class="tarif-ex-grid">' +
+          [1, 3, 6, 12].map(m => '<div><small>' + m + ' mois</small><b>' + fmt(TARIFS.h * m) + ' H</b><em>' + fmt(TARIFS.f * m) + ' F</em></div>').join('') +
+        '</div></div>' +
+        '<div class="callout">' + ICON('circle-info') + ' Le prix sans promotion est linéaire : le tarif mensuel multiplié par la durée choisie.</div>' +
+      '</div>' +
+      '<div class="card"><h3>Promotion du réseau</h3><p class="mut tiny">Une seule promotion, valable dans toutes les salles et pour les hommes comme pour les femmes.</p>' +
+        '<label class="check-line"><input type="checkbox" id="promoActive"' + (PROMO.active ? ' checked' : '') + '> Activer la promotion sur tout le réseau</label>' +
+        '<div class="f"><label>Nom de la promotion<input id="promoNom" maxlength="60" value="' + esc(PROMO.nom || '') + '"></label>' +
+        '<label>Fin de la promotion<input id="promoFin" type="date" value="' + fin + '"></label></div>' +
+        '<p class="tiny mut" style="margin-top:12px">Prix promotionnels par durée. Laisser vide pour ne pas appliquer d’offre sur cette durée.</p>' +
+        '<div class="f tarif-f3">' + [1, 2, 3].map(m => '<label>' + m + ' mois<input id="promo' + m + '" type="number" min="0" step="500" value="' + offreN(m) + '" placeholder="' + TARIFS.h * m + '"></label>').join('') + '</div>' +
+        '<div class="row gap8" style="margin-top:14px"><button class="btn p" onclick="saveTarifs()">' + ICON('floppy-disk') + 'Enregistrer</button><button class="btn" onclick="resetTarifs()">' + ICON('rotate-left') + 'Valeurs d’origine</button></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="card table-card"><div class="table-tools"><div><h3>Grille complète · 1 à 12 mois</h3><p class="tiny mut">Prix total pour la durée choisie. La promotion remplace le tarif linéaire sur les durées concernées.</p></div>' +
+      '<span class="badge ' + (active ? 'b-warn' : 'b-off') + '">' + (active ? ICON('tags') + ' Promotion active' : 'Sans promotion') + '</span></div>' +
+      '<div class="table-scroll"><table><thead><tr><th>Durée</th><th>Hommes · base</th><th>Femmes · base</th><th>Prix appliqué</th><th>Économie</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      '<p class="tiny mut" style="margin-top:10px">' + ICON('circle-info') + ' Les nouveaux abonnements, les renouvellements et les demandes de l’espace adhérent utilisent immédiatement ces tarifs. Les encaissements passés sont conservés.</p></div>';
+}
+
+function saveTarifs() {
+  const h = Math.round(+$('tarifH').value || 0);
+  const f = Math.round(+$('tarifF').value || 0);
+  if (h <= 0 || f <= 0) return toast('Les deux tarifs mensuels doivent être supérieurs à zéro', 'ko');
+  TARIFS.h = h;
+  TARIFS.f = f;
+  const offres = {};
+  [1, 2, 3].forEach(m => {
+    const v = Math.round(+$('promo' + m).value || 0);
+    if (v > 0) offres[m] = v;
+  });
+  PROMO.offres = offres;
+  PROMO.active = $('promoActive').checked && Object.keys(offres).length > 0;
+  PROMO.nom = $('promoNom').value.trim() || 'Promotion du réseau';
+  const fin = $('promoFin').value;
+  PROMO.fin = fin ? new Date(fin + 'T23:59:59') : null;
+  journal('Tarifs & promotion mis à jour', 'Hommes ' + fmt(h) + ' · Femmes ' + fmt(f) + (PROMO.active ? ' · promotion active' : ' · sans promotion'));
+  recalc(); render();
+  toast(PROMO.active ? 'Tarifs et promotion enregistrés' : 'Tarifs enregistrés · promotion désactivée', 'ok');
+}
+
+function resetTarifs() {
+  TARIFS.h = 20000;
+  TARIFS.f = 15000;
+  PROMO.active = true;
+  PROMO.nom = 'Promotion de lancement';
+  PROMO.fin = addDays(45);
+  PROMO.offres = { 1: 15000, 2: 27500, 3: 40000 };
+  journal('Tarifs réinitialisés', 'Valeurs de démonstration restaurées');
+  recalc(); render();
+  toast('Tarifs d’origine restaurés', 'ok');
 }
 
 // ---------------------------------------------------------------- PARAMÈTRES

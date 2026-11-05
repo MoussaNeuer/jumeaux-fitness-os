@@ -9,7 +9,8 @@ function fiche(id) {
   const pays = D[m.home].pay.filter(x => x.m === m.id).slice(0, 3);
   openModal('<div class="row sp"><div><h3>' + esc(m.nom) + '</h3><p class="tiny mut">' + m.id + ' · ' + esc(D[m.home].nom) + '</p></div>' + bdg(st) + '</div>' +
     '<div class="fiche-top">' + qrSvg(m, 118) + '<div class="fiche-meta">' +
-      '<span><small>Formule</small><b>' + p.n + ' · ' + fmt(p.p) + '</b></span>' +
+      '<span><small>Formule</small><b>' + p.n + ' · ' + fmt(prixMembre(m)) + '</b></span>' +
+      '<span><small>Genre</small><b>' + (m.genre === 'f' ? 'Femme · ' + fmt(TARIFS.f) + '/mois' : 'Homme · ' + fmt(TARIFS.h) + '/mois') + '</b></span>' +
       '<span><small>Expiration</small><b>' + dstr(m.exp) + '</b></span>' +
       '<span><small>Temps restant</small><b class="' + (joursRestants(m) <= 7 ? 't-ko' : 't-ok') + '">' + (joursRestants(m) >= 0 ? joursRestants(m) + ' jours' : 'expiré') + '</b></span>' +
       '<span><small>Accès multi-salles</small><b>' + (m.multi ? 'Oui' : 'Non') + '</b></span>' +
@@ -17,7 +18,8 @@ function fiche(id) {
     '<div class="f"><label>Nom complet<input id="en" value="' + esc(m.nom) + '"></label>' +
       '<label>Téléphone fictif<input id="et" value="' + esc(m.tel) + '" placeholder="7X XXX XX XX"></label>' +
       '<label>E-mail fictif<input id="em" value="' + esc(m.mail) + '" placeholder="adherent@demo.local"></label>' +
-      '<label>Formule<select id="ep">' + PLANS.map((x, i) => '<option value="' + i + '"' + (i === m.plan ? ' selected' : '') + '>' + x.n + ' — ' + fmt(x.p) + '</option>').join('') + '</select></label>' +
+      '<label>Formule<select id="ep">' + PLANS.map((x, i) => '<option value="' + i + '"' + (i === m.plan ? ' selected' : '') + '>' + x.n + ' — ' + fmt(prixPlan(x.m, m.genre)) + (promotionPour(x.m) ? ' · promo' : '') + '</option>').join('') + '</select></label>' +
+      '<label>Genre<select id="eg"><option value="h"' + (m.genre !== 'f' ? ' selected' : '') + '>Homme — ' + fmt(TARIFS.h) + '/mois</option><option value="f"' + (m.genre === 'f' ? ' selected' : '') + '>Femme — ' + fmt(TARIFS.f) + '/mois</option></select></label>' +
       '<label class="check-line"><input type="checkbox" id="emulti"' + (m.multi ? ' checked' : '') + '> Autoriser l’accès dans les autres salles</label></div>' +
     '<div class="mini-pays"><b class="tiny mut">Derniers paiements</b>' + (pays.length ? pays.map(x => '<span><b>' + dstr(x.date) + '</b><small>' + fmt(x.montant) + ' · ' + x.moyen + '</small>' + bdg(x.st) + '</span>').join('') : '<span class="tiny mut">Aucun paiement enregistré.</span>') + '</div>' +
     '<div class="row gap8" style="margin-top:16px"><button class="btn p" onclick="saveM(\'' + m.id + '\')">' + ICON('check') + 'Enregistrer</button>' +
@@ -33,6 +35,7 @@ function saveM(id) {
   m.tel = $('et').value.trim();
   m.mail = $('em').value.trim();
   m.plan = +$('ep').value;
+  m.genre = $('eg').value;
   m.multi = $('emulti').checked;
   recalc();
   closeModal(); render();
@@ -68,8 +71,9 @@ function addForm() {
     '<div class="f"><label>Nom complet<input id="an" placeholder="Ex. Awa Ndiaye" autocomplete="off"></label>' +
     '<label>Téléphone fictif<input id="at" value="77 000 00 00"></label>' +
     '<label>E-mail fictif (optionnel)<input id="ae" placeholder="adherent@demo.local"></label>' +
-    '<label>Formule<select id="ap">' + PLANS.map((p, i) => '<option value="' + i + '"' + (i === 1 ? ' selected' : '') + '>' + p.n + ' — ' + fmt(p.p) + ' (' + p.j + ' jours)</option>').join('') + '</select></label>' +
-    '<label class="check-line"><input type="checkbox" id="am" checked> Accès multi-salles (formule annuelle incluse)</label></div>' +
+    '<label>Genre<select id="ag"><option value="h">Homme — ' + fmt(TARIFS.h) + '/mois</option><option value="f">Femme — ' + fmt(TARIFS.f) + '/mois</option></select></label>' +
+    '<label>Formule<select id="ap">' + PLANS.map((p, i) => '<option value="' + i + '"' + (i === 0 ? ' selected' : '') + '>' + planOptionText(p.m) + '</option>').join('') + '</select></label>' +
+    '<label class="check-line"><input type="checkbox" id="am"> Accès multi-salles (offert avec la formule 12 mois)</label></div>' +
     '<div class="row gap8" style="margin-top:16px"><button class="btn p" onclick="addM()">' + ICON('user-plus') + 'Créer l’adhérent</button><button class="btn" onclick="closeModal()">Annuler</button></div>',
     { title: 'Nouvel adhérent' });
   setTimeout(() => $('an')?.focus(), 60);
@@ -78,18 +82,19 @@ function addForm() {
 function addM() {
   const nom = ($('an').value || '').trim();
   if (!nom) return toast('Saisissez un nom complet', 'ko');
-  const d = D[S.salle], pl = +$('ap').value;
+  const d = D[S.salle], pl = +$('ap').value, genre = $('ag').value;
   const nums = d.mem.map(m => +m.id.split('-')[1]);
   const next = (Math.max(0, ...nums) + 1);
   const id = S.salle.toUpperCase() + '-' + String(next).padStart(4, '0');
+  const montant = prixPlan(PLANS[pl].m, genre);
   const m = {
-    id, nom, tel: $('at').value.trim(), mail: $('ae').value.trim(), plan: pl,
-    exp: addDays(PLANS[pl].j), debut: new Date(), susp: false, home: S.salle, multi: $('am').checked,
+    id, nom, tel: $('at').value.trim(), mail: $('ae').value.trim(), plan: pl, genre,
+    exp: addDays(PLANS[pl].j), debut: new Date(), susp: false, home: S.salle, multi: $('am').checked || PLANS[pl].m >= 12,
     inscription: new Date(), naissance: new Date(1995, 0, 1), agent: 'Direction',
     derniere: new Date(), autoRenew: false, renouv: [], resas: [], demande: null, demandeHist: []
   };
   d.mem.unshift(m);
-  d.pay.unshift({ ref: 'REC-' + S.salle.toUpperCase() + '-' + Date.now().toString().slice(-5), m: id, montant: PLANS[pl].p, moyen: 'Espèces', date: new Date(), st: 'confirmé', agent: 'Direction' });
+  d.pay.unshift({ ref: 'REC-' + S.salle.toUpperCase() + '-' + Date.now().toString().slice(-5), m: id, montant, moyen: 'Espèces', date: new Date(), st: 'confirmé', agent: 'Direction' });
   d.act.unshift(['Nouvel adhérent enregistré', nom]);
   d.freq[6] = (d.freq[6] || 0) + 0;
   recalc(); closeModal(); render();
@@ -103,19 +108,20 @@ function renew(id, opts) {
   const d = D[m.home], base = m.exp > AUJ ? m.exp : AUJ;
   const moyen = opts.moyen || 'Wave';
   const st = opts.statut || 'confirmé';
+  const montant = prixMembre(m);
   m.debut = new Date(+base);
   m.exp = new Date(+base + PLANS[m.plan].j * J);
   m.susp = false;
   m.renouv = m.renouv || [];
-  m.renouv.unshift({ date: new Date(), plan: m.plan, montant: PLANS[m.plan].p, moyen, type: 'renouvellement' });
+  m.renouv.unshift({ date: new Date(), plan: m.plan, montant, moyen, type: 'renouvellement' });
   if (m.demande && m.demande.type === 'renouvellement') closeDemand(m, 'acceptée', 'Renouvellement enregistré');
   d.pay.unshift({
     ref: 'REC-' + m.id + '-' + Date.now().toString().slice(-4),
-    m: m.id, montant: PLANS[m.plan].p, moyen, date: new Date(), st,
+    m: m.id, montant, moyen, date: new Date(), st,
     agent: opts.agent || 'Direction'
   });
   d.act.unshift(['Abonnement renouvelé', m.nom]);
-  journal('Renouvellement simulé', m.nom + ' · ' + PLANS[m.plan].n);
+  journal('Renouvellement simulé', m.nom + ' · ' + PLANS[m.plan].n + ' · ' + fmt(montant));
   recalc();
   closeModal(); render();
   toast(st === 'confirmé' ? 'Renouvellement simulé — aucun paiement réel' : 'Renouvellement déclaré, à vérifier en caisse', st === 'confirmé' ? 'ok' : 'warn');
@@ -125,7 +131,7 @@ function newPayment() {
   const d = D[S.salle];
   openModal('<h3>Enregistrer un paiement</h3><p class="tiny mut">Simulation : aucun débit réel ne sera effectué.</p>' +
     '<div class="f"><label>Adhérent<select id="npm">' + d.mem.map(m => '<option value="' + m.id + '">' + esc(m.nom) + ' — ' + m.id + '</option>').join('') + '</select></label>' +
-    '<label>Formule<select id="npp">' + PLANS.map((p, i) => '<option value="' + i + '">' + p.n + ' — ' + fmt(p.p) + '</option>').join('') + '</select></label>' +
+    '<label>Formule<select id="npp">' + PLANS.map((p, i) => '<option value="' + i + '">' + planOptionText(p.m) + '</option>').join('') + '</select></label>' +
     '<label>Moyen de paiement<select id="npmoy">' + MOYENS.map(x => '<option>' + x + '</option>').join('') + '</select></label>' +
     '<label>Statut<select id="npst"><option value="confirmé">Confirmé</option><option value="en attente">En attente de vérification</option></select></label>' +
     '<label class="check-line"><input type="checkbox" id="npren" checked> Prolonger l’abonnement de la durée de la formule</label></div>' +
@@ -137,14 +143,16 @@ function savePay() {
   const d = D[S.salle], m = findMembre($('npm').value), pl = +$('npp').value;
   if (!m) return;
   const st = $('npst').value, moyen = $('npmoy').value;
-  d.pay.unshift({ ref: 'REC-' + S.salle.toUpperCase() + '-' + Date.now().toString().slice(-5), m: m.id, montant: PLANS[pl].p, moyen, date: new Date(), st, agent: 'Direction' });
+  const montant = prixPlan(PLANS[pl].m, m.genre);
+  d.pay.unshift({ ref: 'REC-' + S.salle.toUpperCase() + '-' + Date.now().toString().slice(-5), m: m.id, montant, moyen, date: new Date(), st, agent: 'Direction' });
   if ($('npren').checked) {
     m.plan = pl;
     m.exp = new Date(+Math.max(+AUJ, +m.exp) + PLANS[pl].j * J);
     m.susp = false;
+    m.multi = m.multi || PLANS[pl].m >= 12;
   }
   d.act.unshift(['Paiement ' + st, m.nom]);
-  journal('Paiement enregistré', fmt(PLANS[pl].p) + ' · ' + moyen + ' · ' + st);
+  journal('Paiement enregistré', fmt(montant) + ' · ' + moyen + ' · ' + st);
   recalc(); closeModal(); render();
   toast(st === 'confirmé' ? 'Paiement enregistré (simulation)' : 'Paiement placé en vérification', st === 'confirmé' ? 'ok' : 'warn');
 }
@@ -356,7 +364,8 @@ function treatDemand(id, accept) {
   if (dm.type === 'changement') {
     m.plan = dm.plan;
     closeDemand(m, 'acceptée');
-    journal('Changement de formule accepté', m.nom + ' · ' + PLANS[m.plan].n);
+    journal(dm.promo ? 'Offre promotionnelle acceptée' : 'Changement de formule accepté', m.nom + ' · ' + PLANS[m.plan].n);
+    if (dm.promo) { renew(id, { agent: 'Direction' }); return; }
     recalc(); render(); toast('Formule mise à jour', 'ok');
   } else {
     closeDemand(m, 'acceptée');
@@ -400,7 +409,7 @@ function openPlan(id) {
   const m = findMembre(id);
   if (!m) return;
   openModal('<h3>Changer la formule</h3><p class="tiny mut">' + esc(m.nom) + ' · ' + m.id + ' · formule actuelle : ' + PLANS[m.plan].n + '</p>' +
-    '<div class="f"><label>Nouvelle formule<select id="chgPlan">' + PLANS.map((p, i) => '<option value="' + i + '"' + (i === m.plan ? ' selected' : '') + '>' + p.n + ' — ' + fmt(p.p) + ' · ' + p.j + ' jours</option>').join('') + '</select></label>' +
+    '<div class="f"><label>Nouvelle formule<select id="chgPlan">' + PLANS.map((p, i) => '<option value="' + i + '"' + (i === m.plan ? ' selected' : '') + '>' + planOptionText(p.m) + '</option>').join('') + '</select></label>' +
     '<label class="check-line"><input type="checkbox" id="chgHist" checked> Enregistrer le changement dans l’historique</label></div>' +
     '<div class="fin-note">' + ICON('circle-info') + '<span>La date d’échéance reste inchangée. Le changement est simulé et ne déclenche aucun paiement.</span></div>' +
     '<div class="row gap8" style="margin-top:16px"><button class="btn p" onclick="savePlan(\'' + m.id + '\')">' + ICON('check') + 'Appliquer</button><button class="btn" onclick="closeModal()">Annuler</button></div>',
@@ -414,7 +423,7 @@ function savePlan(id) {
   const prev = m.plan;
   if (next === prev) { closeModal(); return toast('Formule inchangée', 'warn'); }
   m.plan = next;
-  m.multi = next === 2 || m.multi;
+  m.multi = PLANS[next].m >= 12 || m.multi;
   if ($('chgHist') && $('chgHist').checked) {
     m.renouv = m.renouv || [];
     m.renouv.unshift({ date: new Date(), plan: next, montant: 0, moyen: '—', type: 'changement' });
@@ -431,7 +440,7 @@ function newPaymentFin() {
   openModal('<h3>Encaisser un paiement</h3><p class="tiny mut">Écriture fictive ajoutée au journal de la session. Aucun débit réel.</p>' +
     '<div class="f"><label>Salle<select id="fps" onchange="finPayMembers()">' + sites.map(s => '<option value="' + s.id + '"' + (s.id === defSite ? ' selected' : '') + '>' + s.nom + '</option>').join('') + '</select></label>' +
     '<label>Adhérent<select id="fpm">' + D[defSite].mem.map(m => '<option value="' + m.id + '">' + esc(m.nom) + ' — ' + m.id + '</option>').join('') + '</select></label>' +
-    '<label>Formule<select id="fpp">' + PLANS.map((p, i) => '<option value="' + i + '">' + p.n + ' — ' + fmt(p.p) + '</option>').join('') + '</select></label>' +
+    '<label>Formule<select id="fpp">' + PLANS.map((p, i) => '<option value="' + i + '">' + planOptionText(p.m) + '</option>').join('') + '</select></label>' +
     '<label>Moyen de paiement<select id="fpmoy">' + MOYENS.map(x => '<option>' + x + '</option>').join('') + '</select></label>' +
     '<label>Statut<select id="fpst"><option value="confirmé">Confirmé — encaissé</option><option value="déclaré">Déclaré — à vérifier</option><option value="en attente">En attente — non réglé</option></select></label>' +
     '<label class="check-line"><input type="checkbox" id="fppr"> Prolonger l’abonnement de la durée de la formule</label></div>' +
@@ -451,16 +460,18 @@ function savePayFin() {
   if (!canAccessFinanceSite(site)) return toast('Accès refusé à cette salle', 'ko');
   if (!m) return;
   const st = $('fpst').value, moyen = $('fpmoy').value, d = D[site];
-  d.pay.unshift({ ref: 'REC-' + site.toUpperCase() + '-' + Date.now().toString().slice(-5), m: m.id, montant: PLANS[pl].p, moyen, date: new Date(), st, agent: 'Direction' });
+  const montant = prixPlan(PLANS[pl].m, m.genre);
+  d.pay.unshift({ ref: 'REC-' + site.toUpperCase() + '-' + Date.now().toString().slice(-5), m: m.id, montant, moyen, date: new Date(), st, agent: 'Direction' });
   if ($('fppr').checked) {
     m.plan = pl;
     m.exp = new Date(+Math.max(+AUJ, +m.exp) + PLANS[pl].j * J);
     m.susp = false;
+    m.multi = m.multi || PLANS[pl].m >= 12;
     m.renouv = m.renouv || [];
-    m.renouv.unshift({ date: new Date(), plan: pl, montant: PLANS[pl].p, moyen, type: 'renouvellement' });
+    m.renouv.unshift({ date: new Date(), plan: pl, montant, moyen, type: 'renouvellement' });
   }
   d.act.unshift(['Paiement ' + st, m.nom]);
-  journal('Encaissement ' + st, fmt(PLANS[pl].p) + ' · ' + moyen + ' · ' + siteName(site));
+  journal('Encaissement ' + st, fmt(montant) + ' · ' + moyen + ' · ' + siteName(site));
   recalc(); closeModal(); render();
   toast(st === 'confirmé' ? 'Paiement encaissé (simulation)' : 'Paiement placé en ' + payMeta(st).n.toLowerCase(), st === 'confirmé' ? 'ok' : 'warn');
 }

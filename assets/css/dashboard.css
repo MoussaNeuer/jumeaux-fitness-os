@@ -322,8 +322,29 @@ tr.c:hover .rowlink i { transform: translateX(3px); }
 .plan-flag { position: absolute; top: 0; right: 0; padding: 4px 12px; border-radius: 0 0 0 10px; background: var(--c); color: var(--g-deep); font-size: 9.5px; font-weight: 800; letter-spacing: .04em; }
 .plan-name { font-size: 12.5px; font-weight: 700; color: var(--mut); }
 .plan-price { font-size: clamp(22px, 2.3vw, 28px); letter-spacing: -.035em; }
+.plan-pair { display: flex; gap: 8px; margin-top: 3px; }
+.plan-pair > span { flex: 1; min-width: 0; padding: 6px 8px; border-radius: 8px; background: var(--card-2); border: 1px solid var(--bd); }
+.plan-pair small { display: block; font-size: 8px; text-transform: uppercase; letter-spacing: .05em; color: var(--mut); }
+.plan-pair b { display: block; font-size: 13px; letter-spacing: -.02em; white-space: nowrap; }
+.plan-card.promo { border-color: color-mix(in srgb, var(--org) 42%, var(--bd)); background: linear-gradient(180deg, color-mix(in srgb, var(--org) 8%, var(--card)), var(--card)); }
+.plan-card.promo .plan-flag { background: var(--org); color: #1c1305; }
 .plan-bar { height: 5px; border-radius: 99px; background: var(--bg-2); overflow: hidden; margin: 12px 0 6px; }
 .plan-bar i { display: block; height: 100%; background: var(--c); border-radius: inherit; }
+
+/* ---------- Tarifs & promotion ---------- */
+.tarif-f2, .tarif-f3 { display: grid; gap: 10px; }
+.tarif-f2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.tarif-f3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tarif-ex { margin-top: 14px; padding: 11px; border-radius: 10px; background: var(--card-2); border: 1px solid var(--bd); }
+.tarif-ex > span { display: flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 700; color: var(--mut); }
+.tarif-ex > span i { color: var(--g); }
+.tarif-ex-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+.tarif-ex-grid > div { padding: 6px; border-radius: 8px; background: var(--card); border: 1px solid var(--bd); text-align: center; }
+.tarif-ex-grid small { display: block; font-size: 8px; text-transform: uppercase; letter-spacing: .05em; color: var(--mut); }
+.tarif-ex-grid b { display: block; font-size: 11px; }
+.tarif-ex-grid em { display: block; font-style: normal; font-size: 9px; color: var(--mut); }
+.table-tools > div > h3 { font-size: 13px; }
+.table-tools > div > p { margin-top: 2px; }
 
 /* ---------- Qualité ---------- */
 .qual-card { display: flex; flex-direction: column; gap: 12px; }

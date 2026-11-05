@@ -10,13 +10,65 @@ const addDays = n => new Date(+AUJ + Math.round(n) * J);
 
 const PRE = ['Moussa', 'Awa', 'Cheikh', 'Fatou', 'Ibrahima', 'Mariama', 'Ousmane', 'Khady', 'Abdoulaye', 'Aminata', 'Modou', 'Ndèye', 'Pape', 'Sokhna', 'Mamadou', 'Rokhaya', 'Ibrahima', 'Adama', 'Bineta', 'Seydou'];
 const NOM = ['Diop', 'Fall', 'Ndiaye', 'Sow', 'Ba', 'Sarr', 'Diallo', 'Faye', 'Gueye', 'Mbaye', 'Seck', 'Thiam', 'Cissé', 'Kane', 'Samb', 'Ndao'];
+const PRENOMS_F = new Set(['Awa', 'Fatou', 'Mariama', 'Khady', 'Aminata', 'Ndèye', 'Sokhna', 'Rokhaya', 'Bineta']);
+const genreDe = prenom => (PRENOMS_F.has(prenom) ? 'f' : 'h');
 const AGENTS = ['Aïssatou Ba', 'Moussa Diop', 'Bineta Faye', 'Ousmane Sarr'];
 
-const PLANS = [
-  { n: 'Mensuel', j: 30, p: 15000, c: '#2FD07B', d: 'Pour découvrir sans engagement' },
-  { n: 'Trimestriel', j: 90, p: 40000, c: '#D9A441', d: 'Le meilleur équilibre', pop: true },
-  { n: 'Annuel', j: 365, p: 140000, c: '#7DD3FC', d: 'Accès multi-salles inclus' }
-];
+// ---------- Tarifs de la plateforme (modifiables par la Direction) ----------
+// Prix de base pour UN mois. Les durées vont de 1 à 12 mois uniquement.
+const TARIFS = {
+  h: 20000,
+  f: 15000
+};
+
+// Promotion globale au réseau : elle remplace le tarif linéaire pour les
+// durées indiquées, pour les hommes comme pour les femmes.
+const PROMO = {
+  active: true,
+  nom: 'Promotion de lancement',
+  fin: addDays(45),
+  offres: { 1: 15000, 2: 27500, 3: 40000 }
+};
+
+const PLAN_COLORS = ['#2FD07B', '#34D399', '#D9A441', '#F5C76A', '#7DD3FC', '#38BDF8', '#A78BFA', '#8B5CF6', '#F472B6', '#FB7185', '#F97316', '#94A3B8'];
+
+const PLANS = Array.from({ length: 12 }, (_, i) => {
+  const m = i + 1;
+  return {
+    n: m + ' mois',
+    m,
+    j: m * 30,
+    c: PLAN_COLORS[i],
+    d: m === 1 ? 'Sans engagement' : m === 12 ? 'Accès multi-salles inclus' : 'Engagement de ' + m + ' mois',
+    pop: m === 3
+  };
+});
+
+const tarifGenre = genre => (genre === 'f' ? TARIFS.f : TARIFS.h);
+const promoEnCours = () => {
+  if (!PROMO.active) return false;
+  if (!PROMO.fin) return true;
+  const fin = new Date(PROMO.fin);
+  return isNaN(+fin) || +fin >= +AUJ;
+};
+const promotionPour = months => !!(promoEnCours() && PROMO.offres[months] != null && Number(PROMO.offres[months]) > 0);
+const prixPlan = (months, genre) => promotionPour(months) ? Number(PROMO.offres[months]) : tarifGenre(genre) * months;
+const prixMembre = m => prixPlan(PLANS[m.plan].m, m.genre);
+const promoOffres = () => PLANS.filter(p => promotionPour(p.m)).map(p => ({
+  mois: p.m,
+  prix: Number(PROMO.offres[p.m]),
+  baseH: TARIFS.h * p.m,
+  baseF: TARIFS.f * p.m
+}));
+const promoOffre = months => promoOffres().find(x => x.mois === months) || null;
+
+// Étiquette des formules dans les listes déroulantes.
+function planOptionText(months) {
+  const h = prixPlan(months, 'h'), f = prixPlan(months, 'f');
+  const prix = h === f ? fmt(h) : fmt(h) + ' H · ' + fmt(f) + ' F';
+  return months + ' mois — ' + prix + (promotionPour(months) ? ' · promo' : '');
+}
+
 const MOYENS = ['Espèces', 'Wave', 'Orange Money', 'Carte bancaire'];
 const MOYENS_ICON = { 'Espèces': 'money-bill-1', 'Wave': 'mobile-screen', 'Orange Money': 'mobile-screen', 'Carte bancaire': 'credit-card' };
 
@@ -122,43 +174,51 @@ const renewalAlert = m => {
   return '';
 };
 
-// Salaire mensuel moyen encaissé par adhérent (formules lissées)
-const planMensuel = p => PLANS[p].p / (PLANS[p].j / 30);
+// Équivalent mensuel encaissé par adhérent (promotion incluse si active)
+const planMensuel = m => prixMembre(m) / PLANS[m.plan].m;
 
 // ---------- Génération ----------
 function buildSalle(s) {
   const r = rng(s.s * 97 + 11);
   const mem = [], pay = [], pre = [];
 
+  // Répartition réaliste : les courtes durées restent majoritaires, les
+  // engagements longs existent mais sont plus rares.
+  const PLAN_POOL = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 4, 5, 6, 7, 8, 10, 11];
+
   for (let i = 0; i < s.n; i++) {
-    const x = r(), plan = Math.floor(r() * 3);
+    const x = r(), plan = PLAN_POOL[Math.floor(r() * PLAN_POOL.length)];
     const prenom = PRE[Math.floor(r() * PRE.length)];
     const nomFam = NOM[Math.floor(r() * NOM.length)];
+    const genre = genreDe(prenom);
+    const duree = PLANS[plan].j;
+    const prix = prixPlan(PLANS[plan].m, genre);
     const tel = r() < .07 ? '' : '7' + (Math.floor(r() * 2) + 7) + ' ' + String(100 + Math.floor(r() * 899)) + ' ' + String(10 + Math.floor(r() * 89)) + ' ' + String(10 + Math.floor(r() * 89));
     const mail = r() < .55 ? slug(prenom + ' ' + nomFam) + '@demo.local' : '';
     const recent = r() < .10;
     const off = recent ? 0 : x < .52 ? 9 + r() * 130 : x < .68 ? r() * 8 : x < .88 ? -1 - r() * 80 : 6 + r() * 25;
     const inscription = recent
       ? addDays(-Math.floor(r() * 27))
-      : new Date(Math.min(+addDays(-(25 + Math.floor(r() * 760))), +addDays(off - PLANS[plan].j) - 4 * J));
+      : new Date(Math.min(+addDays(-(25 + Math.floor(r() * 760))), +addDays(off - duree) - 4 * J));
     // Cycle cohérent : l'échéance reste dans la durée de la formule en cours
     // et la date de début ne peut donc jamais se situer dans le futur.
     const exp = new Date(Math.min(
-      recent ? +addDays(Math.round((+inscription - +AUJ) / J) + PLANS[plan].j) : +addDays(off),
-      +AUJ + PLANS[plan].j * J
+      recent ? +addDays(Math.round((+inscription - +AUJ) / J) + duree) : +addDays(off),
+      +AUJ + duree * J
     ));
-    const debut = new Date(+exp - PLANS[plan].j * J);
+    const debut = new Date(+exp - duree * J);
     const renouv = Array.from({ length: 1 + Math.floor(r() * 3) }, (_, k) => ({
-      date: addDays(-(PLANS[plan].j * (k + 1) + Math.floor(r() * 12))),
-      plan, montant: PLANS[plan].p, moyen: MOYENS[Math.floor(r() * MOYENS.length)]
+      date: addDays(-(duree * (k + 1) + Math.floor(r() * 12))),
+      plan, montant: prix, moyen: MOYENS[Math.floor(r() * MOYENS.length)]
     }));
     if (!recent && r() < .30) {
-      renouv.unshift({ date: addDays(-Math.floor(r() * 26)), plan, montant: PLANS[plan].p, moyen: MOYENS[Math.floor(r() * MOYENS.length)] });
+      renouv.unshift({ date: addDays(-Math.floor(r() * 26)), plan, montant: prix, moyen: MOYENS[Math.floor(r() * MOYENS.length)] });
     }
     const wantChange = !recent && r() < .045;
     mem.push({
       id: s.id.toUpperCase() + '-' + String(i + 1).padStart(4, '0'),
       nom: prenom + ' ' + nomFam,
+      genre,
       tel, mail, plan,
       exp,
       debut,
@@ -168,13 +228,13 @@ function buildSalle(s) {
       resas: [],
       demande: !recent && r() < .075 ? {
         type: wantChange ? 'changement' : 'renouvellement',
-        plan: wantChange ? (plan + 1) % 3 : plan,
+        plan: wantChange ? (plan + 1) % PLANS.length : plan,
         at: addDays(-Math.floor(r() * 6)),
         statut: 'à traiter'
       } : null,
       demandeHist: [],
       home: s.id,
-      multi: plan === 2 || r() < .22,
+      multi: PLANS[plan].m >= 12 || r() < .22,
       inscription,
       naissance: new Date(1980 + Math.floor(r() * 25), Math.floor(r() * 12), 1 + Math.floor(r() * 27)),
       agent: AGENTS[Math.floor(r() * AGENTS.length)]
@@ -206,7 +266,7 @@ function buildSalle(s) {
     const n = r() < .48 ? 0 : 1 + Math.floor(r() * 2);
     for (let k = 0; k < n; k++) {
       pay.push({
-        ref: payRef(), m: m.id, montant: PLANS[m.plan].p, moyen: pickMoyen(),
+        ref: payRef(), m: m.id, montant: prixMembre(m), moyen: pickMoyen(),
         date: addDays(-(31 + Math.floor(r() * 89))), st: statusHist(),
         agent: AGENTS[Math.floor(r() * AGENTS.length)]
       });
@@ -215,13 +275,13 @@ function buildSalle(s) {
 
   // Mois en cours : encaissements liés aux échéances et aux passages en caisse.
   // On remplit un panier proche du CA mensuel pour éviter des recettes incohérentes.
-  const dueRate = [.82, .46, .12];
+  const dueRate = [.86, .74, .62, .50, .40, .33, .28, .24, .21, .19, .17, .15];
   const target = Math.round(rev[11] * (0.74 + r() * 0.06));
   const candidates = mem.filter(m => {
     const st = statut(m);
     if (st === 'expiré' || st === 'suspendu') return false;
-    return r() < dueRate[m.plan] * (0.8 + r() * 0.4);
-  }).map(m => ({ m, amount: PLANS[m.plan].p }));
+    return r() < dueRate[PLANS[m.plan].m - 1] * (0.8 + r() * 0.4);
+  }).map(m => ({ m, amount: prixMembre(m) }));
   for (let i = candidates.length - 1; i > 0; i--) {
     const j = Math.floor(r() * (i + 1));
     [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
@@ -250,11 +310,11 @@ function buildSalle(s) {
     const md = pool[Math.floor(r() * pool.length)] || mem[0];
     const ma = pool[Math.floor(r() * pool.length)] || mem[1] || mem[0];
     pay.push({
-      ref: payRef(), m: md.id, montant: PLANS[md.plan].p, moyen: 'Orange Money',
+      ref: payRef(), m: md.id, montant: prixMembre(md), moyen: 'Orange Money',
       date: addDays(-(2 + Math.floor(r() * 8))), st: 'déclaré', agent: AGENTS[1]
     });
     pay.push({
-      ref: payRef(), m: ma.id, montant: PLANS[ma.plan].p, moyen: 'Espèces',
+      ref: payRef(), m: ma.id, montant: prixMembre(ma), moyen: 'Espèces',
       date: addDays(-(8 + Math.floor(r() * 10))), st: 'en attente', agent: AGENTS[2]
     });
   }
@@ -264,7 +324,7 @@ function buildSalle(s) {
     const m = mem[Math.min(s.n - 1, 8 + Math.floor(r() * Math.max(1, s.n - 8)))];
     pay.push({
       ref: 'REC-' + s.id.toUpperCase() + '-J' + (i + 1),
-      m: m.id, montant: PLANS[m.plan].p,
+      m: m.id, montant: prixMembre(m),
       moyen: i === 1 ? 'Espèces' : i === 2 ? 'Orange Money' : 'Wave',
       date: new Date(+AUJ + (8 + i * 2) * 3600000 + 12 * 60000),
       st: 'confirmé', agent: AGENTS[i % AGENTS.length]
@@ -274,7 +334,7 @@ function buildSalle(s) {
     const m = mem[Math.min(s.n - 1, 22 + Math.floor(r() * Math.max(1, s.n - 22)))];
     pay.push({
       ref: 'REC-' + s.id.toUpperCase() + '-JD',
-      m: m.id, montant: PLANS[m.plan].p, moyen: 'Wave',
+      m: m.id, montant: prixMembre(m), moyen: 'Wave',
       date: new Date(+AUJ + 10 * 3600000 + 5 * 60000),
       st: 'déclaré', agent: AGENTS[2 % AGENTS.length]
     });
@@ -516,7 +576,7 @@ function finSite(id) {
     split,
     cash,
     declaresJour: declaredToday(id),
-    mrr: d.mem.filter(m => ['actif', 'bientôt'].includes(statut(m))).reduce((a, m) => a + planMensuel(m.plan), 0),
+    mrr: d.mem.filter(m => ['actif', 'bientôt'].includes(statut(m))).reduce((a, m) => a + planMensuel(m), 0),
     forecast: forecast(id)
   };
 }

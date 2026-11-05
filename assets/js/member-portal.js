@@ -17,7 +17,7 @@ function portalMember() {
 function ensureDemoHistory(m) {
   const d = D[m.home];
   if (!d.pay.some(p => p.m === m.id)) {
-    d.pay.unshift({ ref: 'REC-' + m.id + '-D', m: m.id, montant: PLANS[m.plan].p, moyen: 'Wave', date: addDays(-9), st: 'confirmé', agent: 'Accueil' });
+    d.pay.unshift({ ref: 'REC-' + m.id + '-D', m: m.id, montant: prixMembre(m), moyen: 'Wave', date: addDays(-9), st: 'confirmé', agent: 'Accueil' });
     d.pay.sort((a, b) => b.date - a.date);
   }
   if (!d.pre.some(p => p.m === m.id)) {
@@ -42,10 +42,28 @@ function expBanner(m, jr) {
   return '';
 }
 
+function promoCard(m) {
+  const offres = promoOffres();
+  if (!offres.length) return '';
+  const moisActuel = PLANS[m.plan].m;
+  return '<div class="card p-promo">' +
+    '<div class="p-promo-head"><span class="p-promo-flag">' + ICON('tags') + ' ' + esc(PROMO.nom || 'Promotion') + '</span><span class="badge b-warn">Offre limitée</span></div>' +
+    '<h3>Des tarifs promo pour vous</h3>' +
+    '<p class="tiny mut">Offre valable dans toutes les salles du réseau. Parlez-en au gérant de ' + esc(D[m.home].nom) + ' pour en profiter.</p>' +
+    '<div class="p-promo-grid">' + offres.map(o => {
+      const base = (m.genre === 'f' ? TARIFS.f : TARIFS.h) * o.mois;
+      const eco = Math.max(0, base - o.prix);
+      return '<div class="' + (o.mois === moisActuel ? 'on' : '') + '"><small>' + o.mois + ' mois</small><b>' + fmt(o.prix) + '</b><em>' + (eco ? '−' + fmtShort(eco) + ' FCFA' : 'prix promo') + '</em></div>';
+    }).join('') + '</div>' +
+    '<button class="btn p w" onclick="openPromoMe()">' + ICON('paper-plane') + 'Je veux cette offre</button>' +
+    '<p class="tiny center mut" style="margin-top:7px">Le gérant applique la promotion lors de l’abonnement.</p>' +
+    '</div>';
+}
+
 function portal() {
   const m = portalMember();
   ensureDemoHistory(m);
-  const d = D[m.home], p = PLANS[m.plan], jr = joursRestants(m);
+  const d = D[m.home], p = PLANS[m.plan], jr = joursRestants(m), prix = prixMembre(m);
   if (!S.logged) return portalLogin(m);
 
   const hour = new Date().getHours();
@@ -58,6 +76,7 @@ function portal() {
 
   const home = '<div class="p-hello"><span>' + hello + ',</span><h2>' + esc(m.nom.split(' ')[0]) + '</h2><small>' + dayLabel(new Date()) + '</small></div>' +
     expBanner(m, jr) +
+    promoCard(m) +
     '<div class="idc">' +
       '<div class="idc-top"><span class="idc-brand">' + logoChip('xs') + '</span><span class="badge ' + (statut(m) === 'actif' ? 'b-ok' : 'b-warn') + '">' + esc(statut(m) === 'actif' ? 'Actif' : 'Expire bientôt') + '</span></div>' +
       '<div class="idc-name"><b>' + esc(m.nom) + '</b><span>' + m.id + ' · ' + esc(d.nom) + '</span></div>' +
@@ -78,15 +97,16 @@ function portal() {
 
   const pending = m.demande && m.demande.statut === 'à traiter' ? m.demande : null;
   const hist = (m.renouv || []).slice().sort((a, b) => b.date - a.date).slice(0, 5);
-  const abo = '<div class="p-hello"><span>Mon abonnement</span><h2>' + p.n + '</h2><small>Formule fictive · ' + fmt(p.p) + '</small></div>' +
+  const abo = '<div class="p-hello"><span>Mon abonnement</span><h2>' + p.n + '</h2><small>Formule fictive · ' + fmt(prix) + '</small></div>' +
     expBanner(m, jr) +
     '<div class="card p-plan" style="--pc:' + p.c + '"><div class="row sp"><span class="plan-name">' + p.n + '</span><span class="badge ' + (jr >= 0 ? 'b-ok' : 'b-ko') + '">' + (jr >= 0 ? 'En cours' : 'Expiré') + '</span></div>' +
-      '<b class="plan-price">' + fmt(p.p) + '</b><span class="tiny mut">' + p.j + ' jours · ' + p.d + '</span>' +
+      '<b class="plan-price">' + fmt(prix) + '</b><span class="tiny mut">' + p.j + ' jours · ' + p.d + '</span>' +
       '<div class="p-plan-dates"><span><small>Début</small><b>' + dstr(m.debut || new Date(+m.exp - p.j * J)) + '</b></span><span><small>Fin</small><b>' + dstr(m.exp) + '</b></span></div>' +
       '<div class="progress lg"><i style="width:' + Math.max(3, Math.min(100, jr / p.j * 100)) + '%"></i></div>' +
       '<span class="tiny mut">' + (jr >= 0 ? jr + ' jours restants' : 'Expiré depuis ' + Math.abs(jr) + ' jours') + '</span>' +
       '<label class="switch-row"><span><b>Renouvellement automatique</b><small>Simulé — aucun prélèvement réel</small></span><input type="checkbox" ' + (m.autoRenew ? 'checked' : '') + ' onchange="toggleAutoMe()"></label>' +
     '</div>' +
+    promoCard(m) +
     (pending
       ? '<div class="card p-info p-pending"><h3>' + ICON('clock-rotate-left') + ' Demande en attente</h3><p class="tiny mut">' + (pending.type === 'changement' ? 'Changement vers ' + PLANS[pending.plan].n : 'Renouvellement ' + PLANS[pending.plan].n) + ' · envoyée le ' + dstr(pending.at) + '. Le gérant doit la traiter.</p><button class="btn s w" onclick="cancelMe()">Annuler ma demande</button></div>'
       : '<div class="row gap6" style="margin-bottom:10px"><button class="btn p" style="flex:1" onclick="requestMe(\'renouvellement\')">' + ICON('rotate') + 'Demander un renouvellement</button><button class="btn" onclick="openPlanMe()">' + ICON('shuffle') + 'Changer</button></div>') +
@@ -183,14 +203,15 @@ function bigQr() {
     '<p class="tiny mut" style="margin-top:10px">' + (m.multi ? 'Accès multi-salles autorisé.' : 'Accès limité à ' + D[m.home].nom + ' — hors formule multi-salles, la borne refusera l’entrée.') + '</p></div>', { title: 'Mon QR' });
 }
 function renewMe() {
-  const m = portalMember(), d = D[m.home], p = PLANS[m.plan];
+  const m = portalMember(), d = D[m.home], p = PLANS[m.plan], prix = prixMembre(m);
   m.debut = new Date(+Math.max(+AUJ, +m.exp));
   m.exp = new Date(+m.debut + p.j * J);
   m.susp = false;
+  m.multi = m.multi || p.m >= 12;
   m.renouv = m.renouv || [];
-  m.renouv.unshift({ date: new Date(), plan: m.plan, montant: p.p, moyen: 'Wave', type: 'renouvellement' });
+  m.renouv.unshift({ date: new Date(), plan: m.plan, montant: prix, moyen: 'Wave', type: 'renouvellement' });
   if (m.demande) { m.demande = null; }
-  d.pay.unshift({ ref: 'REC-' + m.id + '-R' + Date.now().toString().slice(-3), m: m.id, montant: p.p, moyen: 'Wave', date: new Date(), st: 'confirmé', agent: 'Espace adhérent' });
+  d.pay.unshift({ ref: 'REC-' + m.id + '-R' + Date.now().toString().slice(-3), m: m.id, montant: prix, moyen: 'Wave', date: new Date(), st: 'confirmé', agent: 'Espace adhérent' });
   d.act.unshift(['Abonnement renouvelé', m.nom]);
   journal('Renouvellement adhérent', m.nom + ' · ' + p.n);
   recalc(); render();
@@ -204,6 +225,33 @@ function requestMe(type) {
   journal('Demande adhérent', m.nom + ' · ' + (m.demande.type === 'changement' ? 'changement de formule' : 'renouvellement'));
   recalc(); render();
   toast('Demande transmise au gérant (simulation)', 'ok');
+}
+
+function openPromoMe() {
+  const m = portalMember();
+  if (m.demande && m.demande.statut === 'à traiter') return toast('Une demande est déjà en attente de traitement', 'warn');
+  const offres = promoOffres();
+  if (!offres.length) return toast('Aucune promotion active pour le moment', 'warn');
+  openModal('<h3>' + esc(PROMO.nom || 'Promotion') + '</h3><p class="tiny mut">Choisissez la durée qui vous intéresse. Le gérant de ' + esc(D[m.home].nom) + ' appliquera le tarif promotionnel à l’accueil.</p>' +
+    '<div class="f"><label>Offre souhaitée<select id="promoPlan">' + offres.map(o => {
+      const base = (m.genre === 'f' ? TARIFS.f : TARIFS.h) * o.mois;
+      return '<option value="' + o.mois + '"' + (o.mois === PLANS[m.plan].m ? ' selected' : '') + '>' + o.mois + ' mois — ' + fmt(o.prix) + ' (au lieu de ' + fmt(base) + ')</option>';
+    }).join('') + '</select></label></div>' +
+    '<div class="callout">' + ICON('circle-info') + ' Votre demande sera visible par le gérant dans les demandes à traiter. Aucun paiement n’est déclenché.</div>' +
+    '<div class="row gap8" style="margin-top:14px"><button class="btn p" onclick="savePromoMe()">' + ICON('paper-plane') + 'Envoyer au gérant</button><button class="btn" onclick="closeModal()">Annuler</button></div>',
+    { title: 'Offre promotionnelle' });
+}
+
+function savePromoMe() {
+  const m = portalMember();
+  const months = +$('promoPlan').value;
+  const plan = PLANS.findIndex(p => p.m === months);
+  if (plan < 0) return;
+  const type = plan === m.plan ? 'renouvellement' : 'changement';
+  m.demande = { type, plan, at: new Date(), statut: 'à traiter', promo: true };
+  journal('Demande offre promotionnelle', m.nom + ' · ' + months + ' mois');
+  recalc(); closeModal(); render();
+  toast('Demande transmise au gérant : ' + months + ' mois à ' + fmt(prixPlan(months, m.genre)), 'ok');
 }
 
 function cancelMe() {
@@ -226,7 +274,7 @@ function toggleAutoMe() {
 function openPlanMe() {
   const m = portalMember();
   openModal('<h3>Changer de formule</h3><p class="tiny mut">Votre demande sera transmise au gérant de ' + esc(D[m.home].nom) + '.</p>' +
-    '<div class="f"><label>Formule souhaitée<select id="mePlan">' + PLANS.map((p, i) => '<option value="' + i + '"' + (i === m.plan ? ' selected' : '') + '>' + p.n + ' — ' + fmt(p.p) + ' · ' + p.j + ' jours</option>').join('') + '</select></label></div>' +
+    '<div class="f"><label>Formule souhaitée<select id="mePlan">' + PLANS.map((p, i) => '<option value="' + i + '"' + (i === m.plan ? ' selected' : '') + '>' + planOptionText(p.m) + '</option>').join('') + '</select></label></div>' +
     '<div class="row gap8" style="margin-top:16px"><button class="btn p" onclick="savePlanMe()">' + ICON('paper-plane') + 'Envoyer la demande</button><button class="btn" onclick="closeModal()">Annuler</button></div>' +
     '<p class="tiny mut" style="margin-top:10px">Aucun paiement n’est déclenché. Le changement est une demande simulée.</p>',
     { title: 'Changer de formule' });

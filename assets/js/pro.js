@@ -177,15 +177,15 @@ function momoHTML() {
   if (!mo.ref) {
     return '<h3>Demande de paiement Mobile Money</h3><p class="tiny mut">Simulation : aucun débit réel, aucun fournisseur contacté.</p><div class="f">' +
       '<label>Adhérent<select id="mmm">' + d.mem.slice(0, 20).map(m => '<option value="' + m.id + '">' + esc(m.nom) + ' — ' + m.id + '</option>').join('') + '</select></label>' +
-      '<label>Formule<select id="mmp">' + PLANS.map((p, i) => '<option value="' + i + '">' + p.n + ' — ' + fmt(p.p) + '</option>').join('') + '</select></label>' +
+      '<label>Formule<select id="mmp">' + PLANS.map((p, i) => '<option value="' + i + '">' + planOptionText(p.m) + '</option>').join('') + '</select></label>' +
       '<label>Fournisseur<select id="mmv"><option>Wave</option><option>Orange Money</option></select></label></div>' +
       '<button class="btn p w" style="margin-top:12px" onclick="sendMoMo()">' + ICON('paper-plane') + 'Envoyer la demande</button>';
   }
-  const p = d.pay.find(x => x.ref === mo.ref), ok = p && p.st === 'confirmé';
+  const p = d.pay.find(x => x.ref === mo.ref), ok = p && p.st === 'confirmé', m = findMembre(mo.m);
   const etapes = [['Demande créée', 'Référence ' + mo.ref + ' · statut « en attente »'], ['Validation du client', 'Le client valide sur ' + mo.prov + ' (code ou application)'],
     ['Preuve du fournisseur', 'Confirmation signée (webhook) reçue par le serveur'], ['Contrôles', 'Signature, référence, montant et commande vérifiés, une seule fois']];
   const fait = ok ? 4 : 1;
-  return '<h3>' + (ok ? 'Paiement confirmé' : 'Paiement en attente') + '</h3><p class="tiny mut">' + esc(findMembre(mo.m).nom) + ' · ' + fmt(PLANS[mo.pl].p) + ' · ' + mo.prov + '</p>' +
+  return '<h3>' + (ok ? 'Paiement confirmé' : 'Paiement en attente') + '</h3><p class="tiny mut">' + esc(m.nom) + ' · ' + fmt(prixPlan(PLANS[mo.pl].m, m.genre)) + ' · ' + mo.prov + '</p>' +
     '<ol class="mm-steps">' + etapes.map((e, i) => '<li class="' + (i < fait ? 'done' : i === fait ? 'now' : '') + '"><i>' + (i < fait ? ICON('check') : i + 1) + '</i><div><b>' + e[0] + '</b><small>' + e[1] + '</small></div></li>').join('') + '</ol>' +
     (mo.msg ? '<div class="callout ' + mo.msg[0] + '">' + ICON(mo.msg[0] === 'ok' ? 'circle-check' : 'triangle-exclamation') + ' ' + mo.msg[1] + '</div>' : '') +
     (ok ? '' : '<div class="mm-btns"><button class="btn s" onclick="momoEvent(\'redir\')">Le client revient sur le site (redirection)</button><button class="btn s" onclick="momoEvent(\'bad\')">Webhook avec mauvais montant</button><button class="btn s p" onclick="momoEvent(\'ok\')">Webhook signé valide</button></div>') +
@@ -195,7 +195,8 @@ function momoHTML() {
 function sendMoMo() {
   const d = D[S.salle], m = findMembre($('mmm').value), pl = +$('mmp').value, prov = $('mmv').value;
   const ref = 'MM-' + S.salle.toUpperCase() + '-' + Date.now().toString().slice(-5);
-  d.pay.unshift({ ref, m: m.id, montant: PLANS[pl].p, moyen: prov, date: new Date(), st: 'en attente', agent: DROITS[S.role].n });
+  const montant = prixPlan(PLANS[pl].m, m.genre);
+  d.pay.unshift({ ref, m: m.id, montant, moyen: prov, date: new Date(), st: 'en attente', agent: DROITS[S.role].n });
   S.momo = { site: S.salle, ref, m: m.id, pl, prov, msg: null };
   journal('Demande Mobile Money', ref + ' · ' + prov); recalc(); render();
   openModal(momoHTML(), { title: 'Paiement Mobile Money' });
@@ -208,6 +209,7 @@ function momoEvent(e) {
   else {
     p.st = 'confirmé';
     m.exp = new Date(+Math.max(+AUJ, +m.exp) + PLANS[mo.pl].j * J); m.plan = mo.pl; m.susp = false;
+    m.multi = m.multi || PLANS[mo.pl].m >= 12;
     d.act.unshift(['Paiement confirmé', m.nom]); journal('Paiement confirmé', mo.ref + ' · webhook signé');
     mo.msg = ['ok', 'Preuve reçue et contrôlée : paiement <b>confirmé</b>, abonnement prolongé, reçu disponible.'];
     recalc(); render();
@@ -292,7 +294,7 @@ function openFiche() {
 // ---------- Lecture QR par caméra sur iPhone (repli jsQR, chargé à la demande) ----------
 if (!('BarcodeDetector' in window)) {
   let charge = null;
-  const chargerJsQR = () => charge || (charge = new Promise(ok => { const s = document.createElement('script'); s.src = 'assets/vendor/jsQR.js?v=7.4'; s.onload = ok; s.onerror = ok; document.head.appendChild(s); }));
+  const chargerJsQR = () => charge || (charge = new Promise(ok => { const s = document.createElement('script'); s.src = 'assets/vendor/jsQR.js?v=7.5'; s.onload = ok; s.onerror = ok; document.head.appendChild(s); }));
   window.BarcodeDetector = class {
     constructor() { this.c = document.createElement('canvas'); }
     async detect(v) {

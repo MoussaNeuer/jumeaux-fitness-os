@@ -12,6 +12,7 @@ const TITLES = {
   exp: 'Expansion — Jumeaux Fitness OS',
   rap: 'Rapports — Jumeaux Fitness OS',
   set: 'Paramètres — Jumeaux Fitness OS',
+  tarifs: 'Tarifs & promotion — Jumeaux Fitness OS',
   salle: 'Back-office — Jumeaux Fitness OS',
   portal: 'Espace adhérent — Jumeaux Fitness OS',
   checkin: 'Contrôle d’accès — Jumeaux Fitness OS'
@@ -40,6 +41,7 @@ function render() {
   else if (v === 'etab') root.innerHTML = shell(viewEtab());
   else if (v === 'exp') root.innerHTML = shell(viewExp());
   else if (v === 'rap') root.innerHTML = shell(viewRap());
+  else if (v === 'tarifs') root.innerHTML = shell(viewTarifs());
   else if (v === 'set') root.innerHTML = shell(viewSet());
   else if (v === 'salle') root.innerHTML = shell(viewSalle());
   else root.innerHTML = shell(viewNet());
