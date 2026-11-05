@@ -98,6 +98,26 @@
   .tabs { display: flex; width: 100%; }
   .tab { flex: 1 0 auto; justify-content: center; }
   .salle-head .page-title { font-size: 24px; }
+
+  .pres-bar { padding-left: 12px; padding-right: 12px; }
+  .pres-head { flex-wrap: wrap; gap: 6px 10px; }
+  .pres-left { order: 1; }
+  .pres-kicker { display: none; }
+  .pres-logo { padding: 3px 5px; }
+  .pres-logo .logo-word { display: none; }
+  .pres-logo .logo-mark { display: block; width: 22px; height: 22px; }
+  .pres-ctrl { order: 2; margin-left: auto; }
+  .pres-count { margin-right: 2px; }
+  .pres-nav-btn { width: 32px; height: 32px; }
+  .pres-txt { order: 3; flex-basis: 100%; }
+  .pres-bar h3 { font-size: 14px; white-space: normal; }
+  .pres-bar p { font-size: 10.5px; line-height: 1.4; }
+  .pres-foot { margin-top: 6px; }
+  .pres-dots { display: none; }
+  .pres-hint-d { display: none; }
+  .pres-hint-m { display: inline; }
+  body.pres .main { padding-bottom: 26px; }
+  body.pres #toast { bottom: 20px; }
 }
 
 /* ---------- Mobile : grilles et tableaux ---------- */
@@ -219,12 +239,6 @@
   .scanner-shell { min-height: 160px; }
   .receipt { padding: 14px; }
   .theme-choice { grid-template-columns: 1fr 1fr; }
-  .pres-panel { bottom: 10px; padding: 13px 14px 11px; border-radius: 15px; }
-  .pres-panel h3 { font-size: 15px; }
-  .pres-panel p { font-size: 10.5px; }
-  .pres-keys { display: none; }
-  body.pres .main { padding-bottom: 190px; }
-  body.pres #toast { bottom: 210px; }
 }
 
 /* ---------- Petits mobiles ---------- */
@@ -266,8 +280,8 @@
   .data-facts { grid-template-columns: 1fr 1fr; }
   .qty { display: none; }
   .chart-h { flex-wrap: wrap; }
-  .pres-actions .btn { font-size: 10px; padding: 4px 8px; }
-  .pres-actions .btn i { display: none; }
+  .pres-nav-btn { width: 30px; height: 30px; border-radius: 9px; }
+  .pres-full { display: none; }
 
   .portal-wrap { padding: 0; gap: 0; }
   .portal-side { display: none; }
@@ -298,7 +312,7 @@
 @media print {
   @page { margin: 14mm; }
   body { background: #fff !important; color: #111 !important; }
-  .side, .top, .mobile-note, #toast, #tip, #pres, #prog, .lnav, .lfoot, .page-actions, .table-tools, .pager, .tabs, .site-actions, .pres-panel { display: none !important; }
+  .side, .top, .mobile-note, #toast, #tip, #pres, #prog, .lnav, .lfoot, .page-actions, .table-tools, .pager, .tabs, .site-actions, .pres-bar { display: none !important; }
   .app, .app.col { display: block !important; }
   .main { padding: 0 !important; max-width: none !important; }
   .card { box-shadow: none !important; border-color: #ddd !important; break-inside: avoid; }

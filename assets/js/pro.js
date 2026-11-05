@@ -292,7 +292,7 @@ function openFiche() {
 // ---------- Lecture QR par caméra sur iPhone (repli jsQR, chargé à la demande) ----------
 if (!('BarcodeDetector' in window)) {
   let charge = null;
-  const chargerJsQR = () => charge || (charge = new Promise(ok => { const s = document.createElement('script'); s.src = 'assets/vendor/jsQR.js?v=7.3'; s.onload = ok; s.onerror = ok; document.head.appendChild(s); }));
+  const chargerJsQR = () => charge || (charge = new Promise(ok => { const s = document.createElement('script'); s.src = 'assets/vendor/jsQR.js?v=7.4'; s.onload = ok; s.onerror = ok; document.head.appendChild(s); }));
   window.BarcodeDetector = class {
     constructor() { this.c = document.createElement('canvas'); }
     async detect(v) {

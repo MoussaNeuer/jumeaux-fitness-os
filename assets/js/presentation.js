@@ -34,16 +34,24 @@ function buildPresUI() {
   const p = $('pres');
   if (!p || p.dataset.built) return;
   p.dataset.built = '1';
-  p.innerHTML = '<div class="pres-panel" role="dialog" aria-modal="false" aria-label="Mode présentation">' +
-    '<div class="pres-top"><span class="pres-left">' + logoChip('xs') + '<span class="pres-kicker">' + ICON('play') + 'Mode présentation</span></span><span class="pres-count" id="pc"></span></div>' +
-    '<h3 id="pt"></h3><p id="px"></p>' +
-    '<div class="pres-dots" id="pdots"></div>' +
-    '<div class="pbar"><i id="pp"></i></div>' +
-    '<div class="pres-actions"><button class="btn s" onclick="step(-1)">' + ICON('arrow-left') + 'Précédent</button>' +
-      '<button class="btn s p" onclick="step(1)">Suivant ' + ICON('arrow-right') + '</button>' +
-      '<button class="btn s" onclick="toggleFull()">' + ICON('expand') + 'Plein écran</button>' +
-      '<button class="btn s" onclick="endPres()">' + ICON('xmark') + 'Quitter</button></div>' +
-    '<div class="pres-keys">← → naviguer · Échap quitter · ' + STEPS.length + ' étapes</div></div>';
+  p.innerHTML = '<div class="pres-bar" role="region" aria-label="Mode présentation">' +
+    '<div class="pres-head">' +
+      '<span class="pres-left">' + logoChip('pres-logo') + '<span class="pres-kicker">' + ICON('play') + 'Mode présentation</span></span>' +
+      '<div class="pres-txt" aria-live="polite"><h3 id="pt"></h3><p id="px"></p></div>' +
+      '<div class="pres-ctrl">' +
+        '<span class="pres-count" id="pc"></span>' +
+        '<button type="button" class="pres-nav-btn" id="pPrev" onclick="step(-1)" aria-label="Étape précédente" title="Précédent (←)">' + ICON('arrow-left') + '</button>' +
+        '<button type="button" class="pres-nav-btn p" id="pNext" onclick="step(1)" aria-label="Étape suivante" title="Suivant (→)">' + ICON('arrow-right') + '</button>' +
+        '<button type="button" class="pres-nav-btn pres-full" onclick="toggleFull()" aria-label="Activer le plein écran" title="Plein écran">' + ICON('expand') + '</button>' +
+        '<button type="button" class="pres-nav-btn" onclick="endPres()" aria-label="Quitter le mode présentation" title="Quitter (Échap)">' + ICON('xmark') + '</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="pres-foot">' +
+      '<div class="pres-dots" id="pdots"></div>' +
+      '<div class="pbar"><i id="pp"></i></div>' +
+      '<span class="pres-hint pres-hint-d">← → naviguer · Échap quitter · ' + STEPS.length + ' étapes</span>' +
+      '<span class="pres-hint pres-hint-m">Balayez ← → pour naviguer</span>' +
+    '</div></div>';
 }
 function toggleFull() {
   if (document.fullscreenElement) document.exitFullscreen?.();
@@ -60,19 +68,31 @@ function step(d) {
   applyStep();
 }
 function jumpTo(i) { ps = i; applyStep(); }
+function scrollTopInstant() {
+  const h = document.documentElement;
+  const prev = h.style.scrollBehavior;
+  h.style.scrollBehavior = 'auto';
+  window.scrollTo(0, 0);
+  h.style.scrollBehavior = prev;
+}
 function applyStep() {
   const s = STEPS[ps];
   S.live = !!s.live;
   if (s.login) S.logged = true;
   Object.assign(S, s.patch);
   render();
-  window.scrollTo({ top: 0, behavior: 'auto' });
+  scrollTopInstant();
   const t = $('pt'), x = $('px'), c = $('pc'), b = $('pp'), dots = $('pdots');
   if (t) t.textContent = s.t;
   if (x) x.textContent = s.d;
   if (c) c.textContent = (ps + 1) + ' / ' + STEPS.length;
   if (b) b.style.width = ((ps + 1) / STEPS.length * 100) + '%';
-  if (dots) dots.innerHTML = STEPS.map((_, i) => '<button class="' + (i === ps ? 'on' : i < ps ? 'done' : '') + '" aria-label="Étape ' + (i + 1) + '" onclick="jumpTo(' + i + ')"></button>').join('');
+  const box = document.querySelector('.pres-txt');
+  if (box) { box.classList.remove('pres-in'); void box.offsetWidth; box.classList.add('pres-in'); }
+  const prev = $('pPrev'), next = $('pNext');
+  if (prev) prev.disabled = ps === 0;
+  if (next) next.disabled = ps === STEPS.length - 1;
+  if (dots) dots.innerHTML = STEPS.map((_, i) => '<button type="button" class="' + (i === ps ? 'on' : i < ps ? 'done' : '') + '" aria-label="Étape ' + (i + 1) + '" aria-current="' + (i === ps ? 'step' : 'false') + '" onclick="jumpTo(' + i + ')"></button>').join('');
   if (s.scan) setTimeout(() => {
     const sel = $('sm');
     if (!sel) return;
@@ -91,3 +111,35 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Home') { e.preventDefault(); jumpTo(0); }
   if (e.key === 'End') { e.preventDefault(); jumpTo(STEPS.length - 1); }
 });
+
+// Navigation tactile : balayage horizontal gauche / droite (mobile et tablette).
+let presTouch = null;
+let presSwipedAt = 0;
+document.addEventListener('touchstart', e => {
+  presTouch = null;
+  if (!document.body.classList.contains('pres') || e.touches.length !== 1) return;
+  const t = e.target;
+  if (t && t.closest && t.closest('.pres-bar, .tabs, button, a, input, select, textarea, label')) return;
+  presTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY, at: Date.now() };
+}, { passive: true });
+document.addEventListener('touchend', e => {
+  if (!presTouch || !document.body.classList.contains('pres')) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - presTouch.x;
+  const dy = t.clientY - presTouch.y;
+  const dt = Date.now() - presTouch.at;
+  presTouch = null;
+  if (dt > 900) return;
+  if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.35) return;
+  presSwipedAt = Date.now();
+  step(dx < 0 ? 1 : -1);
+}, { passive: true });
+document.addEventListener('touchcancel', () => { presTouch = null; }, { passive: true });
+// Un balayage ne doit pas déclencher en plus le clic de la carte survolée.
+document.addEventListener('click', e => {
+  if (!document.body.classList.contains('pres') || !presSwipedAt) return;
+  if (Date.now() - presSwipedAt > 450) { presSwipedAt = 0; return; }
+  presSwipedAt = 0;
+  e.preventDefault();
+  e.stopPropagation();
+}, true);

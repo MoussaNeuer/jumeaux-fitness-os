@@ -196,7 +196,7 @@ Les chiffres financiers, charges, objectifs et prévisions sont des **hypothèse
 simulation**. Ils ne constituent ni des comptes réels ni une promesse de gain. Ils doivent
 être confrontés aux vrais volumes et factures de Jumeaux Fitness avant toute décision.
 
-## Version « pro » (v7, révision 7.3)
+## Version « pro » (v7, révision 7.4)
 
 Nouveautés, toutes simulées avec des données fictives :
 
@@ -206,9 +206,9 @@ Nouveautés, toutes simulées avec des données fictives :
 - **Panne réseau** (bouton du bandeau) : contrôle « manuel requis » au lieu d'un faux accès, procédure manuelle tracée, régularisation au retour du réseau.
 - **Rappel d'expiration** (onglet Abonnements) : aperçu WhatsApp, SMS et notification, marqué « exemple ».
 - **Scan caméra** : repli jsQR (chargé à la demande) pour iPhone, où BarcodeDetector n'existe pas.
-- Mode présentation : 21 étapes, dont rôles, Mobile Money, panne réseau et décision demandée.
+- Mode présentation : 21 étapes, dont rôles, Mobile Money, panne réseau et décision demandée. Le titre et la description s'affichent dans un bandeau compact en haut, libérant l'écran ; navigation aux flèches (← →), tactile par balayage horizontal sur mobile, et plein écran.
 - **Logo officiel** : le logo fourni (`assets/images/logo.jpeg`) est décliné en `logo.png` (lockup complet) et `logo-mark.png` (emblème carré). Il est présent sur la page d’accueil, le back-office, les quatre salles (en-tête de chaque back-office et cartes établissement), l’espace adhérent, la borne, les reçus, la présentation, la fiche pilote et la page 404. Les icônes PWA et le favicon sont générés à partir de ce logo.
-- `404.html`, image de partage 1200 x 630 (`assets/icons/og-image.png`), cache PWA `jfos-v7.3`.
+- `404.html`, image de partage 1200 x 630 (`assets/icons/og-image.png`), cache PWA `jfos-v7.4`.
 
 Fichiers ajoutés : `assets/js/pro.js`, `assets/css/pro.css`, `assets/vendor/jsQR.js`,
 `assets/images/logo.png`, `assets/images/logo-mark.png`.

@@ -18,8 +18,8 @@ const ICON = n => '<i class="fa-solid fa-' + n + '" aria-hidden="true"></i>';
 // ---------- Logo officiel ----------
 // Le logo source est un lockup sombre sur fond blanc : on l’affiche toujours
 // dans une pastille blanche pour rester lisible sur les surfaces claires et sombres.
-const LOGO_FULL = 'assets/images/logo.png?v=7.3';
-const LOGO_MARK = 'assets/images/logo-mark.png?v=7.3';
+const LOGO_FULL = 'assets/images/logo.png?v=7.4';
+const LOGO_MARK = 'assets/images/logo-mark.png?v=7.4';
 function logoChip(cls) {
   return '<span class="logo-chip' + (cls ? ' ' + cls : '') + '">' +
     '<img class="logo-word" src="' + LOGO_FULL + '" alt="Jumeaux Fitness OS">' +

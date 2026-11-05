@@ -508,7 +508,7 @@ tr.c:hover .rowlink i { transform: translateX(3px); }
 /* ---------- Mode présentation : la mise en page reste utilisable ---------- */
 body.pres .side, body.pres .top, body.pres .mobile-note { display: none; }
 body.pres .app, body.pres .app.col { grid-template-columns: 1fr; }
-body.pres .main { padding-bottom: 200px; max-width: 1420px; }
+body.pres .main { padding-bottom: 28px; max-width: 1420px; }
 
 /* ==========================================================================
    Espace direction : bandeau, équipe & accès
