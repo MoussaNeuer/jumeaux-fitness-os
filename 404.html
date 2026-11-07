@@ -3,7 +3,8 @@
 <script>
 /* GitHub Pages sert cette page sur l’URL profonde demandée : on calcule la racine
    du site (projet GitHub Pages, sous-dossier local ou domaine racine) avant les
-   chemins relatifs du logo, du favicon et du lien de retour. */
+   chemins relatifs du logo, du favicon et du lien de retour. Le logo est ajouté
+   après coup pour éviter une requête spéculative sur la mauvaise URL. */
 (function () {
   var seg = location.pathname.split('/').filter(Boolean);
   var base = '/';
@@ -12,11 +13,16 @@
   var el = document.createElement('base');
   el.href = base;
   document.head.appendChild(el);
+  var icon = document.createElement('link');
+  icon.rel = 'icon';
+  icon.type = 'image/png';
+  icon.href = base + 'assets/images/logo-mark.png?v=7.6';
+  document.head.appendChild(icon);
 })();
 </script>
 <title>Page introuvable — Jumeaux Fitness OS</title><meta name="theme-color" content="#07130D">
-<link rel="icon" href="assets/images/logo-mark.png?v=7.6" type="image/png">
 <style>body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;background:#07130D;color:#fff;font:16px/1.5 system-ui,sans-serif;text-align:center;padding:24px}
 .logo{display:block;width:min(250px,74vw);height:auto;margin:0 auto 26px;padding:10px 14px;border-radius:14px;background:#fff;box-shadow:0 18px 40px -24px #000}
 b{display:block;font-size:56px;color:#22C55E}a{display:inline-block;margin-top:16px;padding:12px 22px;border-radius:12px;background:#22C55E;color:#07130D;font-weight:700;text-decoration:none}</style></head>
-<body><main><img class="logo" src="assets/images/logo.png?v=7.6" alt="Jumeaux Fitness OS"><b>404</b><h1>Cette page n’existe pas</h1><p>Retournez à la démonstration Jumeaux Fitness OS.</p><a href="./">Retour à l’accueil</a></main></body></html>
+<body><main><img class="logo" id="logo404" alt="Jumeaux Fitness OS"><b>404</b><h1>Cette page n’existe pas</h1><p>Retournez à la démonstration Jumeaux Fitness OS.</p><a href="./">Retour à l’accueil</a></main>
+<script>document.getElementById('logo404').src = 'assets/images/logo.png?v=7.6';</script></body></html>
