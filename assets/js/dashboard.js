@@ -1046,14 +1046,15 @@ function viewTarifs() {
         : '<span class="mut">—</span>') + '</td></tr>';
   }).join('');
   return head('Tarifs & promotion',
-    'La Direction fixe les tarifs des quatre salles et pilote une promotion visible par tous les adhérents. <span class="pill inline"><span class="dot"></span>Données fictives</span>',
+    'La Direction fixe les tarifs des quatre salles et pilote une promotion visible par tous les adhérents. <span class="pill inline"><span class="dot"></span>Montants fictifs</span>',
     '<button class="btn s" onclick="go({view:\'portal\'})">' + ICON('mobile-screen') + 'Voir l’espace adhérent</button>') +
     '<div class="grid g4">' +
-      kpi('Tarif hommes', fmt(TARIFS.h) + ' <small class="kpi-of">/ mois</small>', '<span class="mut">base pour 1 mois</span>') +
-      kpi('Tarif femmes', fmt(TARIFS.f) + ' <small class="kpi-of">/ mois</small>', '<span class="mut">base pour 1 mois</span>') +
+      kpi('Tarif hommes', fmt(TARIFS.h) + ' <small class="kpi-of">/ mois</small>', '<span class="mut">exemple fictif pour 1 mois</span>') +
+      kpi('Tarif femmes', fmt(TARIFS.f) + ' <small class="kpi-of">/ mois</small>', '<span class="mut">exemple fictif pour 1 mois</span>') +
       kpi('Promotion', active ? 'Active' : 'Inactive', '<span class="' + (active ? 'up' : 'mut') + '">' + (active ? ICON('tags') + ' ' + esc(PROMO.nom || 'Promotion') : 'aucune offre en cours') + '</span>') +
       kpi('Durées', '1 à 12', '<span class="mut">mois uniquement · sans trimestre</span>') +
     '</div>' +
+    '<div class="callout warn">' + ICON('triangle-exclamation') + ' <span><b>Tarifs de démonstration.</b> Les 20 000 FCFA (hommes) et 15 000 FCFA (femmes) par mois, ainsi que la promotion, sont des valeurs fictives. Elles doivent être <b>validées par la Direction</b> avant tout usage réel.</span></div>' +
     '<div class="grid g2">' +
       '<div class="card"><h3>Tarifs de base</h3><p class="mut tiny">Prix mensuel appliqué aux nouveaux abonnements et aux renouvellements des quatre salles.</p>' +
         '<div class="f tarif-f2"><label>Hommes — FCFA / mois<input id="tarifH" type="number" min="500" step="500" value="' + TARIFS.h + '"></label>' +

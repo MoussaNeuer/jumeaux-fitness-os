@@ -56,7 +56,7 @@ function promoCard(m) {
       return '<div class="' + (o.mois === moisActuel ? 'on' : '') + '"><small>' + o.mois + ' mois</small><b>' + fmt(o.prix) + '</b><em>' + (eco ? '−' + fmtShort(eco) + ' FCFA' : 'prix promo') + '</em></div>';
     }).join('') + '</div>' +
     '<button class="btn p w" onclick="openPromoMe()">' + ICON('paper-plane') + 'Je veux cette offre</button>' +
-    '<p class="tiny center mut" style="margin-top:7px">Le gérant applique la promotion lors de l’abonnement.</p>' +
+    '<p class="tiny center mut" style="margin-top:7px">Montants de démonstration, à valider par la Direction. Le gérant applique la promotion lors de l’abonnement.</p>' +
     '</div>';
 }
 
@@ -232,12 +232,12 @@ function openPromoMe() {
   if (m.demande && m.demande.statut === 'à traiter') return toast('Une demande est déjà en attente de traitement', 'warn');
   const offres = promoOffres();
   if (!offres.length) return toast('Aucune promotion active pour le moment', 'warn');
-  openModal('<h3>' + esc(PROMO.nom || 'Promotion') + '</h3><p class="tiny mut">Choisissez la durée qui vous intéresse. Le gérant de ' + esc(D[m.home].nom) + ' appliquera le tarif promotionnel à l’accueil.</p>' +
+  openModal('<h3>' + esc(PROMO.nom || 'Promotion') + '</h3><p class="tiny mut">Choisissez la durée qui vous intéresse. Montants fictifs, à valider par la Direction. Le gérant de ' + esc(D[m.home].nom) + ' appliquera le tarif promotionnel à l’accueil.</p>' +
     '<div class="f"><label>Offre souhaitée<select id="promoPlan">' + offres.map(o => {
       const base = (m.genre === 'f' ? TARIFS.f : TARIFS.h) * o.mois;
       return '<option value="' + o.mois + '"' + (o.mois === PLANS[m.plan].m ? ' selected' : '') + '>' + o.mois + ' mois — ' + fmt(o.prix) + ' (au lieu de ' + fmt(base) + ')</option>';
     }).join('') + '</select></label></div>' +
-    '<div class="callout">' + ICON('circle-info') + ' Votre demande sera visible par le gérant dans les demandes à traiter. Aucun paiement n’est déclenché.</div>' +
+    '<div class="callout">' + ICON('circle-info') + ' Votre demande sera visible par le gérant dans les demandes à traiter. Aucun paiement n’est déclenché. Les prix affichés sont fictifs et restent à valider par la Direction.</div>' +
     '<div class="row gap8" style="margin-top:14px"><button class="btn p" onclick="savePromoMe()">' + ICON('paper-plane') + 'Envoyer au gérant</button><button class="btn" onclick="closeModal()">Annuler</button></div>',
     { title: 'Offre promotionnelle' });
 }

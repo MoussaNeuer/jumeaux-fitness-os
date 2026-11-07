@@ -1,7 +1,7 @@
 Logo officiel — intégré à l'interface.
-- logo.jpeg : fichier source fourni par Jumeaux Fitness.
 - logo.png : lockup complet recadré, utilisé dans les en-têtes.
-- logo-mark.png : emblème carré, utilisé dans les espaces compacts (menu réduit, mobile, cartes).
+- logo-mark.png : emblème carré (bouclier + J), utilisé dans les espaces compacts (menu réduit, mobile, cartes) et pour le favicon.
+- Les icônes PWA (assets/icons/) sont générées depuis le logo officiel, avec une variante maskable dédiée.
 
 Photos réelles des quatre salles (avec l'accord de Jumeaux Fitness) encore à recevoir :
 déposez km.jpg, yb.jpg, gw.jpg, pa.jpg (1200 x 800, moins de 200 Ko chacune).

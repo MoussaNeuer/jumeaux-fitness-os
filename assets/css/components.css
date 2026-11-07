@@ -63,6 +63,7 @@ body.pres #toast { bottom: 24px; }
   width: min(1240px, 100%);
   margin: 0 auto;
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 500px;
   gap: 34px;
@@ -73,6 +74,7 @@ body.pres #toast { bottom: 24px; }
   position: relative; overflow: hidden;
   display: flex; flex-direction: column; align-items: flex-start;
   min-height: min(760px, calc(100vh - 68px));
+  min-height: min(760px, calc(100dvh - 68px));
   padding: clamp(26px, 4vw, 48px);
   border-radius: 30px;
   background:
@@ -114,6 +116,7 @@ body.pres #toast { bottom: 24px; }
 .phone-screen {
   position: relative;
   height: min(760px, calc(100vh - 150px));
+  height: min(760px, calc(100dvh - 150px));
   min-height: 620px;
   display: flex; flex-direction: column;
   border-radius: 39px;
@@ -286,7 +289,9 @@ body.pres #toast { bottom: 24px; }
 
 /* ---------- Connexion adhérent ---------- */
 .login-wrap {
-  min-height: 100vh; width: min(1080px, 100%); margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: min(1080px, 100%); margin: 0 auto;
   display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-items: center;
   padding: 40px 28px;
 }
@@ -324,11 +329,12 @@ body.pres #toast { bottom: 24px; }
 
 /* ---------- Borne de contrôle d'accès ---------- */
 .borne-mode { background: #06110B; }
-.borne-mode #root { min-height: 100vh; }
+.borne-mode #root { min-height: 100vh; min-height: 100dvh; }
 .borne {
   --tone: #2FD07B;
   position: relative; overflow: hidden;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex; flex-direction: column;
   padding: 24px clamp(20px, 5vw, 56px) 28px;
   background:

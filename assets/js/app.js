@@ -83,6 +83,7 @@ window.addEventListener('hashchange', syncRoute);
 
 // ---------- Démarrage ----------
 if (hasCheckinHash()) S.view = 'checkin';
+installProRender();
 render();
 
 // Conserver le défilement vers une ancre demandée à l'ouverture.

@@ -7,6 +7,7 @@
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg);
 }
 .app.col { grid-template-columns: 78px minmax(0, 1fr); }

@@ -1,7 +1,7 @@
 // ============================================================================
 // Service worker — ressources statiques uniquement, aucune donnée métier
 // ============================================================================
-const V = 'jfos-v7.5';
+const V = 'jfos-v7.6';
 const FILES = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const FILES = [
   './assets/icons/icon.svg',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
+  './assets/icons/icon-maskable-512.png',
   './assets/icons/apple-touch-icon.png',
   './assets/fonts/inter.woff2',
   './assets/fonts/instrument-serif-italic.woff2',

@@ -69,6 +69,10 @@ Chaque salle possède ses adhérents, abonnements, paiements, présences et stat
 
 ### Tarifs et promotion
 
+> **Montants de démonstration.** Les prix ci-dessous (20 000 / 15 000 FCFA et la
+> promotion) sont des exemples fictifs. Ils doivent être validés par la Direction
+> avant tout usage réel.
+
 Les tarifs sont communs au réseau et pilotés depuis l’écran **Tarifs & promotion**
 de la Direction :
 
@@ -220,9 +224,11 @@ Les chiffres financiers, charges, objectifs et prévisions sont des **hypothèse
 simulation**. Ils ne constituent ni des comptes réels ni une promesse de gain. Ils doivent
 être confrontés aux vrais volumes et factures de Jumeaux Fitness avant toute décision.
 
-## Version « pro » (v7, révision 7.5)
+## Version « pro » (v7, révision 7.6)
 
 Nouveautés, toutes simulées avec des données fictives :
+
+- **Corrections 7.6** : icônes PWA régénérées depuis le bouclier complet (plus de rognage), avec une icône maskable dédiée qui reste dans la zone sûre Android ; page 404 fonctionnelle sur les chemins profonds ; hauteurs d’écran en `dvh` pour la barre Safari d’iPhone ; champs de recherche et filtres à 16 px sur mobile pour empêcher le zoom iOS ; tarifs de démonstration explicitement signalés comme fictifs et à valider par la Direction ; fichier source `logo.jpeg` inutilisé supprimé.
 
 - **Tarifs & promotion** : écran Direction pour modifier les prix hommes / femmes des quatre salles, activer une promotion réseau avec date de fin et grille de 1 à 12 mois. L’espace adhérent affiche l’offre et permet d’en faire la demande ; le gérant la traite dans « Demandes à traiter ».
 
@@ -233,16 +239,17 @@ Nouveautés, toutes simulées avec des données fictives :
 - **Rappel d'expiration** (onglet Abonnements) : aperçu WhatsApp, SMS et notification, marqué « exemple ».
 - **Scan caméra** : repli jsQR (chargé à la demande) pour iPhone, où BarcodeDetector n'existe pas.
 - Mode présentation : 21 étapes, dont rôles, Mobile Money, panne réseau et décision demandée. Le titre et la description s'affichent dans un bandeau compact en haut, libérant l'écran ; navigation aux flèches (← →), tactile par balayage horizontal sur mobile, et plein écran.
-- **Logo officiel** : le logo fourni (`assets/images/logo.jpeg`) est décliné en `logo.png` (lockup complet) et `logo-mark.png` (emblème carré). Il est présent sur la page d’accueil, le back-office, les quatre salles (en-tête de chaque back-office et cartes établissement), l’espace adhérent, la borne, les reçus, la présentation, la fiche pilote et la page 404. Les icônes PWA et le favicon sont générés à partir de ce logo.
-- `404.html`, image de partage 1200 x 630 (`assets/icons/og-image.png`), cache PWA `jfos-v7.5`.
+- **Logo officiel** : `logo.png` (lockup complet) et `logo-mark.png` (emblème carré bouclier + J). Il est présent sur la page d’accueil, le back-office, les quatre salles (en-tête de chaque back-office et cartes établissement), l’espace adhérent, la borne, les reçus, la présentation, la fiche pilote et la page 404. Les icônes PWA et le favicon sont générés à partir de ce logo, avec une variante `icon-maskable-512.png` pour Android.
+- `404.html`, image de partage 1200 x 630 (`assets/icons/og-image.png`), cache PWA `jfos-v7.6`.
 - Grille tarifaire **1 à 12 mois** avec prix hommes / femmes et promotion globale au réseau visible par les adhérents.
 
 Fichiers ajoutés : `assets/js/pro.js`, `assets/css/pro.css`, `assets/vendor/jsQR.js`,
 `assets/images/logo.png`, `assets/images/logo-mark.png`.
 À chaque modification, changer ensemble `?v=` dans `index.html` et `V` dans `sw.js`.
 
-> Le script `assets/js/pro.js` se branche sur les fonctions de `app.js` : il doit être chargé
-> **après** `assets/js/app.js` dans `index.html`.
+> Le script `assets/js/pro.js` est chargé **avant** `assets/js/app.js` dans `index.html`.
+> Son wrapper de `render` est installé par `installProRender()`, appelée par `app.js` juste
+> avant le premier rendu.
 
 ## Avant la réunion
 1. Ouvrir le site une fois avec internet, puis recharger (mise à jour du cache).
